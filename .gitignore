@@ -1,0 +1,7 @@
+#Ignore Emacs buffer and autosave files
+*~
+[#]*[#]
+.\#*
+
+#Ignore any generate .exe files
+*.exe
