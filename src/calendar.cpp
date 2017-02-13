@@ -327,17 +327,9 @@ void PrintCalender()
     free(Schedule);
 }
 
-
-int main(int argc, char *argv[])
+void DrawWindow()
 {
-    PrintCalender();
-    return 0;
-}
-
 #if __gnu_linux__
-void drawWindow()
-{
-
     Display *Display = XOpenDisplay(NULL);
     Assert(Display != NULL);
 
@@ -383,7 +375,6 @@ void drawWindow()
                     break;
                 }
                                 
-                XDrawLine(Display, Window, GraphicsContext, 10, 60, 180, 20);
                 XFlush(Display);
             } break;
              
@@ -408,16 +399,17 @@ void drawWindow()
                 timeval TimeValue;
                 gettimeofday(&TimeValue, NULL);
                
-                long theta = (TimeValue.tv_sec % 60);
+                int theta = (TimeValue.tv_sec % 60) * 6;
 
                 int length = 500;
+                int radius = length / 2;
 
                 XPoint c = {WindowWidth * 0.5, WindowHeight * 0.5};
-                
-                float dx = sin(theta) * (length / 2.0);
-                float dy = cos(theta) * (length / 2.0);
 
-                XSegment line = {c.x, c.y, c.x + dx, c.y + dy};
+                XPoint p = {c.x + radius * cos(PI * theta / 180),
+                            c.y + radius * sin(PI * theta / 180)};
+                
+                XSegment line = {c.x, c.y, p.x, p.y};
 
                 XClearWindow(Display,Window);
 
@@ -458,5 +450,16 @@ void drawWindow()
     XDestroyWindow(Display, Window);
 
     XCloseDisplay(Display);
-}
+
 #endif
+}
+
+
+int main(int argc, char *argv[])
+{
+    PrintCalender();
+
+    DrawWindow();
+    
+    return 0;
+}
