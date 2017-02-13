@@ -1,3 +1,6 @@
+#Ignore build folder
+/build/
+
 #Ignore Emacs buffer and autosave files
 *~
 [#]*[#]
