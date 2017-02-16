@@ -396,40 +396,48 @@ void DrawWindow()
                     XSetForeground(Display, GraphicsContext, BlackColor);
                 }
 
-                timeval TimeValue;
-                gettimeofday(&TimeValue, NULL);
-               
-                int theta = (TimeValue.tv_sec % 60) * 6;
-
-                int length = 500;
-                int radius = length / 2;
-
-                XPoint c = {WindowWidth * 0.5, WindowHeight * 0.5};
-
-                XPoint p = {c.x + radius * cos(PI * theta / 180),
-                            c.y + radius * sin(PI * theta / 180)};
-                
-                XSegment line = {c.x, c.y, p.x, p.y};
-
                 XClearWindow(Display,Window);
 
-                XDrawRectangle(Display, Window, GraphicsContext,
-                               c.x - length / 2, c.y - length / 2,
-                               length, length);
+                XPoint c = {WindowWidth * 0.5, WindowHeight * 0.5};
+                int length = 500;
+                
+                {
+                    timeval TimeValue;
+                    gettimeofday(&TimeValue, NULL);
 
-                XArc arc = {c.x - length / 2, c.y - length / 2,
-                            length, length,
-                            0 * 64, 360 * 64};
+                    int thetaOffset = 90;
+                    int theta = (TimeValue.tv_sec % 60) * 6 - thetaOffset;
+
+
+                    int radius = length / 2;
+
+
+                    XPoint p = {c.x + radius * cos(PI * theta / 180),
+                                c.y + radius * sin(PI * theta / 180)};
+
+                    XArc arc = {c.x - length / 2, c.y - length / 2,
+                                length, length,
+                                0 * 64, 360 * 64};
+
+                    XSegment line = {c.x, c.y, p.x, p.y};
                 
-                XDrawArc(Display, Window, GraphicsContext,
-                         arc.x, arc.y,
-                         arc.width, arc.height,
-                         arc.angle1, arc.angle2
-                         );
+                    XDrawArc(Display, Window, GraphicsContext,
+                             arc.x, arc.y,
+                             arc.width, arc.height,
+                             arc.angle1, arc.angle2
+                             );
                 
-                XDrawLine(Display, Window, GraphicsContext,
-                          line.x1, line.y1, line.x2, line.y2
-                          );
+                    XDrawLine(Display, Window, GraphicsContext,
+                              line.x1, line.y1, line.x2, line.y2
+                              );
+                }
+
+                {
+                    XDrawRectangle(Display, Window, GraphicsContext,
+                                   c.x - length / 2, c.y - length / 2,
+                                   length, length);
+                }
+
 
                 
                 XFlush(Display);
