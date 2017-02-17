@@ -140,7 +140,7 @@ global month GlobalMonthArray[12] = {
     {DECEMBER,  "December",  31},
 };
 
-static calendar_year_node GlobalInitialCalendarYear = {2016, GlobalMonthArray, ArrayCount(GlobalMonthArray), NULL, NULL};
+
 
 inline int Floor(float f)
 {
@@ -279,9 +279,10 @@ void CalendarScheduleInititalize( calendar_year_node* Calendar, calendar_schedul
 
 void PrintCalender()
 {
+    calendar_year_node InitialCalendarYear = {2016, GlobalMonthArray, ArrayCount(GlobalMonthArray), NULL, NULL};
     calendar_year_node* NextCalendarYear = (calendar_year_node*) malloc( sizeof (calendar_year_node) );
-    GlobalInitialCalendarYear.NextYear = NextCalendarYear;
-    NextCalendarYear->Year = GlobalInitialCalendarYear.Year + 1;
+    InitialCalendarYear.NextYear = NextCalendarYear;
+    NextCalendarYear->Year = InitialCalendarYear.Year + 1;
     NextCalendarYear->Months = GlobalMonthArray;
     NextCalendarYear->MonthCount = ArrayCount(GlobalMonthArray);
 
@@ -292,7 +293,7 @@ void PrintCalender()
     PrintCalendarMonth(&GlobalMonthArray[AUGUST], SUNDAY);
 
     calendar_schedule* Schedule = (calendar_schedule*) malloc( sizeof (calendar_schedule) );
-    CalendarScheduleInititalize(&GlobalInitialCalendarYear, Schedule);
+    CalendarScheduleInititalize(&InitialCalendarYear, Schedule);
 
     calendar_schedule_entry* Entry = Schedule->Entries;
     strcpy(Entry->Title, "Example");
@@ -327,6 +328,56 @@ void PrintCalender()
     free(Schedule);
 }
 
+void
+DrawNormalClock(Display *Display, Window Window, GC GraphicsContext, int WindowWidth, int WindowHeight)
+{
+    XPoint c = {WindowWidth * 0.5, WindowHeight * 0.5};
+    int length = 500;
+                
+    timeval TimeValue;
+    gettimeofday(&TimeValue, NULL);
+
+    int thetaOffset = 90;
+    int theta = (TimeValue.tv_sec % 60) * 6 - thetaOffset;
+
+
+    int radius = length / 2;
+
+
+    XPoint p = {c.x + radius * cos(PI * theta / 180),
+                c.y + radius * sin(PI * theta / 180)};
+
+    XArc arc = {c.x - length / 2, c.y - length / 2,
+                length, length,
+                0 * 64, 360 * 64};
+
+    XSegment line = {c.x, c.y, p.x, p.y};
+                
+    XDrawArc(Display, Window, GraphicsContext,
+             arc.x, arc.y,
+             arc.width, arc.height,
+             arc.angle1, arc.angle2
+             );
+                
+    XDrawLine(Display, Window, GraphicsContext,
+              line.x1, line.y1, line.x2, line.y2
+              );
+
+    local_persist const char* ClockNumbers[] = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"};
+
+    
+    int padding = 3;
+    for(int i = 1; i <= 12; i++)
+    {
+        int theta = i * 360 / 12 - thetaOffset;
+
+        XDrawString(Display, Window, GraphicsContext,
+                    WindowWidth / 2 + radius * cos(PI * theta / 180),
+                    WindowHeight / 2 + radius * sin(PI * theta / 180),
+                    ClockNumbers[i], strlen(ClockNumbers[i]));
+    }
+}
+
 void DrawWindow()
 {
 #if __gnu_linux__
@@ -351,10 +402,20 @@ void DrawWindow()
     XSelectInput(Display, Window, ExposureMask | KeyPressMask );
     XMapWindow(Display, Window);
 
+    
     GC GraphicsContext = XCreateGC(Display, Window, 0, NULL);
+
     XSetForeground(Display, GraphicsContext, BlackColor);
     XSetBackground(Display, GraphicsContext, WhiteColor);
 
+
+    char *FontName = (char *) "-*-helvetica-*-r-*-*-50-*-*-*-*-*-*-*";
+    XFontStruct *FontInfo = XLoadQueryFont(Display, FontName);
+
+    Assert(FontInfo != NULL);
+
+    XSetFont(Display, GraphicsContext, FontInfo->fid);
+    
     bool IsRunning = true;
     while(IsRunning)
     {
@@ -396,50 +457,10 @@ void DrawWindow()
                     XSetForeground(Display, GraphicsContext, BlackColor);
                 }
 
-                XClearWindow(Display,Window);
+                XClearWindow(Display, Window);
 
-                XPoint c = {WindowWidth * 0.5, WindowHeight * 0.5};
-                int length = 500;
-                
-                {
-                    timeval TimeValue;
-                    gettimeofday(&TimeValue, NULL);
+                DrawNormalClock(Display, Window, GraphicsContext, WindowWidth, WindowHeight);
 
-                    int thetaOffset = 90;
-                    int theta = (TimeValue.tv_sec % 60) * 6 - thetaOffset;
-
-
-                    int radius = length / 2;
-
-
-                    XPoint p = {c.x + radius * cos(PI * theta / 180),
-                                c.y + radius * sin(PI * theta / 180)};
-
-                    XArc arc = {c.x - length / 2, c.y - length / 2,
-                                length, length,
-                                0 * 64, 360 * 64};
-
-                    XSegment line = {c.x, c.y, p.x, p.y};
-                
-                    XDrawArc(Display, Window, GraphicsContext,
-                             arc.x, arc.y,
-                             arc.width, arc.height,
-                             arc.angle1, arc.angle2
-                             );
-                
-                    XDrawLine(Display, Window, GraphicsContext,
-                              line.x1, line.y1, line.x2, line.y2
-                              );
-                }
-
-                {
-                    XDrawRectangle(Display, Window, GraphicsContext,
-                                   c.x - length / 2, c.y - length / 2,
-                                   length, length);
-                }
-
-
-                
                 XFlush(Display);
             } break;
             
