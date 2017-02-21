@@ -84,14 +84,18 @@ struct date_time
 
 typedef struct month
 {
-    u8 Index;
+    month_name Index;
     const char* Name;
     u8 Days;
-  
 } month;
 
 
-inline bool isLeapYear(int Year)
+global month GlobalMonthArray[12] = {
+
+};
+
+
+inline bool IsLeapYear(int Year)
 {
     bool Result = Year % 4 == 0 && (Year % 100 != 0 || Year % 400 == 0);
   
@@ -101,8 +105,8 @@ inline bool isLeapYear(int Year)
 typedef struct calendar_year_node
 {
     u16 Year;
-    month* Months;
-    u8 MonthCount;
+    month Months[12];
+    month_name CurrentMonth;
     calendar_year_node* PreviousYear;
     calendar_year_node* NextYear;
 } calendar_year_node;
@@ -125,24 +129,8 @@ typedef struct calendar_schedule
     u32 DefaultTimeSlotSize;
 } calendar_schedule;
 
-global month GlobalMonthArray[12] = {
-    {JANUARY,   "January",   31},
-    {FEBRUARY,  "February",  28},
-    {MARCH,     "March",     31},
-    {APRIL,     "April",     30},
-    {MAY,       "May",       31},
-    {JUNE,      "June",      30},
-    {JULY,      "July",      31},
-    {AUGUST,    "August",    31},
-    {SEPTEMBER, "September", 30},
-    {OCTOBER,   "October",   31},
-    {NOVEMBER,  "November",  30},
-    {DECEMBER,  "December",  31},
-};
-
-
-
-inline int Floor(float f)
+inline int
+Floor(float f)
 {
     int Result = (int) f; 
     if( f < 0 )
@@ -152,14 +140,15 @@ inline int Floor(float f)
     return Result;
 }
 
-void PrintDateTime(date_time dt)
+void
+PrintDateTime(date_time dt)
 {
     printf("%04d-%02d-%02dT%02d:%02d:%02dZ", dt.Year, dt.Month, dt.Day, dt.Hour, dt.Minute, dt.Second);
 }
 
 inline u64 DateTimeToSeconds(date_time dt)
 {
-    u64 Result = (dt.Year * 365 + isLeapYear(dt.Year)) * 24 * 60 * 60
+    u64 Result = (dt.Year * 365 + IsLeapYear(dt.Year)) * 24 * 60 * 60
         + GlobalMonthArray[dt.Month].Days * 24 * 60 * 60
         + dt.Day * 24 * 60 * 60
         + dt.Hour * 60
@@ -168,7 +157,8 @@ inline u64 DateTimeToSeconds(date_time dt)
     return Result;
 }
 
-inline u64 DurationOfTimeInterval(date_time Start, date_time End)
+inline u64
+DurationOfTimeInterval(date_time Start, date_time End)
 {
     Assert(DateTimeToSeconds(Start) <= DateTimeToSeconds(End));
 
@@ -179,7 +169,8 @@ inline u64 DurationOfTimeInterval(date_time Start, date_time End)
 
 
 //https://en.wikipedia.org/wiki/Determination_of_the_day_of_the_week#Implementation-dependent_methods
-week_day WeekDayFromDate(int d, int m, int y)
+week_day
+WeekDayFromDate(int d, int m, int y)
 {
     week_day Result;
   
@@ -192,7 +183,8 @@ week_day WeekDayFromDate(int d, int m, int y)
     return Result;
 }
 
-void PrintCalendarMonthHeader()
+void
+PrintCalendarMonthHeader()
 {
     local_persist const char* WeekDays[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
     for( int i = 0; i < ArrayCount(WeekDays); i++ )
@@ -202,7 +194,8 @@ void PrintCalendarMonthHeader()
     printf("\n");
 }
 
-void PrintCalendarMonth(month* Month, week_day StartingWeekDay, bool IsLeapYear = false)
+void
+PrintCalendarMonth(month Month, week_day StartingWeekDay, bool IsLeapYear = false)
 {
 
 #if false
@@ -213,9 +206,11 @@ void PrintCalendarMonth(month* Month, week_day StartingWeekDay, bool IsLeapYear 
 
     printf("StartingWeekDay: %d\n", StartingWeekDay);
 #endif
-  
-    int DaysInMonth = Month->Days;
-    if( Month->Index == FEBRUARY && IsLeapYear )
+
+    int DaysInMonth = Month.Days;
+
+    
+    if( Month.Index == FEBRUARY && IsLeapYear )
     {
         DaysInMonth += 1;
     }
@@ -225,7 +220,7 @@ void PrintCalendarMonth(month* Month, week_day StartingWeekDay, bool IsLeapYear 
         printf("[   ]");
     }
   
-    for( int i = 0; i < Month->Days; i++)
+    for( int i = 0; i < Month.Days; i++)
     {
         printf("[%3d]", i+1);
         if( (i + StartingWeekDay) % 7 == SATURDAY )
@@ -234,7 +229,7 @@ void PrintCalendarMonth(month* Month, week_day StartingWeekDay, bool IsLeapYear 
 	}
     }
 
-    for( int i = (Month->Days + StartingWeekDay) % 7; i < SUNDAY; i++)
+    for( int i = (Month.Days + StartingWeekDay) % 7; i < SUNDAY; i++)
     {
         printf("[   ]");
     }
@@ -242,18 +237,19 @@ void PrintCalendarMonth(month* Month, week_day StartingWeekDay, bool IsLeapYear 
     printf("\n");
 }
 
-void PrintCalendarYear(calendar_year_node* CalendarYear)
+void
+PrintCalendarYear(calendar_year_node* CalendarYear)
 {
     int TotalDays = 0;
 
-    for( int MonthIndex = 0; MonthIndex < CalendarYear->MonthCount; MonthIndex++ )
+    for( int MonthIndex = 0; MonthIndex < ArrayCount(CalendarYear->Months); MonthIndex++ )
     {
         month* CurrentMonth = CalendarYear->Months + MonthIndex;
         if( CurrentMonth )
 	{
-            week_day WeekDay = WeekDayFromDate(1, CurrentMonth->Index, CalendarYear->Year);
+            week_day StartingWeekDay = WeekDayFromDate(1, CurrentMonth->Index, CalendarYear->Year);
             PrintCalendarMonthHeader();
-            PrintCalendarMonth(CurrentMonth, WeekDay, isLeapYear(CalendarYear->Year));
+            PrintCalendarMonth(*CurrentMonth, StartingWeekDay, IsLeapYear(CalendarYear->Year));
 	  	  
             TotalDays += CurrentMonth->Days;
 	}
@@ -262,7 +258,8 @@ void PrintCalendarYear(calendar_year_node* CalendarYear)
     Assert(TotalDays == 365);
 }
 
-void CalendarScheduleInititalize( calendar_year_node* Calendar, calendar_schedule* Schedule )
+void
+CalendarScheduleInititalize( calendar_year_node* Calendar, calendar_schedule* Schedule )
 {
     Schedule->InititalCalendarYear = Calendar;
     Schedule->MinimumTimeSlotSize = 300;
@@ -274,62 +271,8 @@ void CalendarScheduleInititalize( calendar_year_node* Calendar, calendar_schedul
     Schedule->Entries = (calendar_schedule_entry*) malloc( Schedule->FreeEntryCount * sizeof (calendar_schedule_entry) );
 }
 
-
-
-
-void PrintCalender()
-{
-    calendar_year_node InitialCalendarYear = {2016, GlobalMonthArray, ArrayCount(GlobalMonthArray), NULL, NULL};
-    calendar_year_node* NextCalendarYear = (calendar_year_node*) malloc( sizeof (calendar_year_node) );
-    InitialCalendarYear.NextYear = NextCalendarYear;
-    NextCalendarYear->Year = InitialCalendarYear.Year + 1;
-    NextCalendarYear->Months = GlobalMonthArray;
-    NextCalendarYear->MonthCount = ArrayCount(GlobalMonthArray);
-
-    //PrintCalendarYear(&GlobalInitialCalendarYear);
-    //PrintCalendarYear(NextCalendarYear);
-  
-    PrintCalendarMonthHeader();
-    PrintCalendarMonth(&GlobalMonthArray[AUGUST], SUNDAY);
-
-    calendar_schedule* Schedule = (calendar_schedule*) malloc( sizeof (calendar_schedule) );
-    CalendarScheduleInititalize(&InitialCalendarYear, Schedule);
-
-    calendar_schedule_entry* Entry = Schedule->Entries;
-    strcpy(Entry->Title, "Example");
-    Entry->StartTime.Day = 11;
-    Entry->StartTime.Hour = 3;
-
-    Entry->EndTime.Day = 11;
-    Entry->EndTime.Hour = 11;
-    Schedule->EntryCount--;
-
-    for( u32 EntryIndex = 0; EntryIndex < Schedule->EntryCount; EntryIndex++ )
-    {
-        calendar_schedule_entry* Entry = &Schedule->Entries[EntryIndex];
-        Assert(Entry);
-        if(Entry->Title[0] != '\0')
-        {
-            PrintDateTime(Entry->StartTime);
-            printf("\n");
-            PrintDateTime(Entry->EndTime);
-            printf("\n");
-            
-            u64 Duration = DurationOfTimeInterval(Entry->StartTime, Entry->EndTime);
-            Assert(Duration >= Schedule->MinimumTimeSlotSize);
-            printf("Title: %s\nStartTime: %d\nEndTime: %d\nDuration: %lu",
-                   Entry->Title, Entry->StartTime.Hour, Entry->EndTime.Hour, (unsigned long)Duration);
-
-	}
-    }
-  
-    free(NextCalendarYear);
-    free(Schedule->Entries);
-    free(Schedule);
-}
-
 void
-DrawNormalClock(Display *Display, Window Window, GC GraphicsContext, int WindowWidth, int WindowHeight)
+DrawClock(Display *Display, Window Window, GC GraphicsContext, int WindowWidth, int WindowHeight)
 {
     XPoint c = {WindowWidth * 0.5, WindowHeight * 0.5};
     int length = 500;
@@ -378,7 +321,44 @@ DrawNormalClock(Display *Display, Window Window, GC GraphicsContext, int WindowW
     }
 }
 
-void DrawWindow()
+void
+DrawCalendar(Display* Display, Window Window, GC GraphicsContext, int WindowWidth, int WindowHeight, calendar_year_node* CalendarYear)
+{
+    month Month = GlobalMonthArray[CalendarYear->CurrentMonth];
+    week_day StartingWeekDay = SUNDAY;
+    int DaysInMonth = Month.Days;
+    
+    if( Month.Index == FEBRUARY && IsLeapYear(CalendarYear->Year) )
+    {
+        DaysInMonth += 1;
+    }
+  
+    for( int i = (StartingWeekDay + 1) % 7; i > 0; i--)
+    {
+        printf("[   ]");
+    }
+  
+    for( int i = 0; i < Month.Days; i++)
+    {
+        printf("[%3d]", i+1);
+        if( (i + StartingWeekDay) % 7 == SATURDAY )
+	{
+            printf("\n");
+	}
+    }
+
+    for( int i = (Month.Days + StartingWeekDay) % 7; i < SUNDAY; i++)
+    {
+        printf("[   ]");
+    }
+  
+    printf("\n");
+
+    
+}
+
+void
+DrawWindow(calendar_year_node* CalendarYear)
 {
 #if __gnu_linux__
     Display *Display = XOpenDisplay(NULL);
@@ -459,7 +439,8 @@ void DrawWindow()
 
                 XClearWindow(Display, Window);
 
-                DrawNormalClock(Display, Window, GraphicsContext, WindowWidth, WindowHeight);
+                DrawClock(Display, Window, GraphicsContext, WindowWidth, WindowHeight);
+                DrawCalendar(Display, Window, GraphicsContext, WindowWidth, WindowHeight, CalendarYear);
 
                 XFlush(Display);
             } break;
@@ -486,9 +467,71 @@ void DrawWindow()
 
 int main(int argc, char *argv[])
 {
-    PrintCalender();
+    calendar_year_node InitialCalendarYear = {2016, {
+        {JANUARY,   "January",   31},
+        {FEBRUARY,  "February",  28},
+        {MARCH,     "March",     31},
+        {APRIL,     "April",     30},
+        {MAY,       "May",       31},
+        {JUNE,      "June",      30},
+        {JULY,      "July",      31},
+        {AUGUST,    "August",    31},
+        {SEPTEMBER, "September", 30},
+        {OCTOBER,   "October",   31},
+        {NOVEMBER,  "November",  30},
+        {DECEMBER,  "December",  31},
+    }, JANUARY, NULL, NULL};
+    
+    calendar_year_node* NextCalendarYear = (calendar_year_node*) malloc( sizeof (calendar_year_node) );
+    InitialCalendarYear.NextYear = NextCalendarYear;
+    NextCalendarYear->Year = InitialCalendarYear.Year + 1;
 
-    DrawWindow();
+    //PrintCalendarYear(&GlobalInitialCalendarYear);
+    //PrintCalendarYear(NextCalendarYear);
+
+    month CurrentMonth = InitialCalendarYear.Months[InitialCalendarYear.CurrentMonth];
+    
+    printf("Month{%d, %s, %d}\n", CurrentMonth.Index, CurrentMonth.Name, CurrentMonth.Days);
+
+    PrintCalendarMonthHeader();
+    PrintCalendarMonth(CurrentMonth, SUNDAY);
+
+    calendar_schedule* Schedule = (calendar_schedule*) malloc( sizeof (calendar_schedule) );
+    CalendarScheduleInititalize(&InitialCalendarYear, Schedule);
+
+    calendar_schedule_entry* Entry = Schedule->Entries;
+    strcpy(Entry->Title, "Example");
+    Entry->StartTime.Day = 11;
+    Entry->StartTime.Hour = 3;
+
+    Entry->EndTime.Day = 11;
+    Entry->EndTime.Hour = 11;
+    Schedule->EntryCount--;
+
+    for( u32 EntryIndex = 0; EntryIndex < Schedule->EntryCount; EntryIndex++ )
+    {
+        calendar_schedule_entry* Entry = &Schedule->Entries[EntryIndex];
+        Assert(Entry);
+        if(Entry->Title[0] != '\0')
+        {
+            PrintDateTime(Entry->StartTime);
+            printf("\n");
+            PrintDateTime(Entry->EndTime);
+            printf("\n");
+            
+            u64 Duration = DurationOfTimeInterval(Entry->StartTime, Entry->EndTime);
+            Assert(Duration >= Schedule->MinimumTimeSlotSize);
+            printf("Title: %s\nStartTime: %d\nEndTime: %d\nDuration: %lu",
+                   Entry->Title, Entry->StartTime.Hour, Entry->EndTime.Hour, (unsigned long)Duration);
+
+	}
+    }
+
+    DrawWindow(&InitialCalendarYear);
+    
+    free(NextCalendarYear);
+    free(Schedule->Entries);
+    free(Schedule);
     
     return 0;
 }
