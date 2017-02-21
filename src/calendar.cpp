@@ -332,7 +332,7 @@ DrawCalendar(Display* Display, Window Window, GC GraphicsContext, int WindowWidt
     {
         DaysInMonth += 1;
     }
-  
+    
     for( int i = (StartingWeekDay + 1) % 7; i > 0; i--)
     {
         printf("[   ]");
@@ -354,6 +354,27 @@ DrawCalendar(Display* Display, Window Window, GC GraphicsContext, int WindowWidt
   
     printf("\n");
 
+
+    int NumberOfRows = 4;
+    int NumberOfColumns = 7;
+
+    for( int i = 0; i <= NumberOfRows; i++ )
+    {
+        int GridLine = i * WindowHeight / NumberOfRows;
+        XDrawLine(Display, Window, GraphicsContext,
+                  0, GridLine,
+                  WindowWidth, GridLine
+                  );
+    }
+
+    for( int i = 0; i <= NumberOfColumns; i++ )
+    {
+        int GridLine = i * WindowWidth / NumberOfColumns;
+        XDrawLine(Display, Window, GraphicsContext,
+                  GridLine, 0,
+                  GridLine, WindowHeight
+                  );
+    }
     
 }
 
