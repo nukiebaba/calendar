@@ -324,7 +324,7 @@ DrawClock(Display *Display, Window Window, GC GraphicsContext, int WindowWidth, 
 void
 DrawCalendar(Display* Display, Window Window, GC GraphicsContext, int WindowWidth, int WindowHeight, calendar_year_node* CalendarYear)
 {
-    month Month = GlobalMonthArray[CalendarYear->CurrentMonth];
+    month Month = CalendarYear->Months[CalendarYear->CurrentMonth];
     week_day StartingWeekDay = SUNDAY;
     int DaysInMonth = Month.Days;
     
@@ -354,10 +354,11 @@ DrawCalendar(Display* Display, Window Window, GC GraphicsContext, int WindowWidt
   
     printf("\n");
 
-
-    int NumberOfRows = 4;
     int NumberOfColumns = 7;
+    int NumberOfRows = ceil((float) DaysInMonth / NumberOfColumns);
 
+    Assert(NumberOfRows > 0);
+    
     for( int i = 0; i <= NumberOfRows; i++ )
     {
         int GridLine = i * WindowHeight / NumberOfRows;
