@@ -41,6 +41,9 @@ typedef uint16_t u16;
 typedef uint32_t u32;
 typedef uint64_t u64;
 
+typedef float f32;
+typedef double f64;
+
 typedef enum
 {
     MONDAY,
@@ -322,7 +325,25 @@ DrawClock(Display *Display, Window Window, GC GraphicsContext, int WindowWidth, 
 }
 
 void
-DrawCalendar(Display* Display, Window Window, GC GraphicsContext, int WindowWidth, int WindowHeight, calendar_year_node* CalendarYear)
+DrawCalendarHeader(Display* Display, Window Window, GC GraphicsContext, int WindowWidth, int WindowHeight)
+{
+    local_persist const char* WeekDays[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+
+    u32 CellWidth = WindowWidth / ArrayCount(WeekDays);
+
+    u32 y = CellWidth / 2;
+    
+    for( int i = 0; i < ArrayCount(WeekDays); i++ )
+    {
+        u32 x = i * CellWidth + CellWidth / 2;
+        XDrawString(Display, Window, GraphicsContext,
+                    x, y,
+                    WeekDays[i], strlen(WeekDays[i]));
+    }
+}
+
+void
+DrawCalendar(Display* Display, Window Window, GC GraphicsContext, u32 WindowWidth, u32 WindowHeight, calendar_year_node* CalendarYear)
 {
     month Month = CalendarYear->Months[CalendarYear->CurrentMonth];
     week_day StartingWeekDay = SUNDAY;
@@ -354,29 +375,61 @@ DrawCalendar(Display* Display, Window Window, GC GraphicsContext, int WindowWidt
   
     printf("\n");
 
-    int NumberOfColumns = 7;
-    int NumberOfRows = ceil((float) DaysInMonth / NumberOfColumns);
+    u32 NumberOfColumns = 7;
+    u32 NumberOfRows = ceil((float) DaysInMonth / NumberOfColumns);
 
     Assert(NumberOfRows > 0);
     
-    for( int i = 0; i <= NumberOfRows; i++ )
+    for( u32 i = 0; i <= NumberOfRows; i++ )
     {
-        int GridLine = i * WindowHeight / NumberOfRows;
+        u32 GridLine = i * WindowHeight / NumberOfRows;
         XDrawLine(Display, Window, GraphicsContext,
                   0, GridLine,
                   WindowWidth, GridLine
                   );
     }
 
-    for( int i = 0; i <= NumberOfColumns; i++ )
+    for( u32 i = 0; i <= NumberOfColumns; i++ )
     {
-        int GridLine = i * WindowWidth / NumberOfColumns;
+        u32 GridLine = i * WindowWidth / NumberOfColumns;
         XDrawLine(Display, Window, GraphicsContext,
                   GridLine, 0,
                   GridLine, WindowHeight
                   );
     }
     
+}
+
+void 
+DrawGrid(Display* Display, Window Window, GC GraphicsContext, u32 OffsetX, u32 OffsetY, u32 Width, u32 Height, u32 Rows, u32 Columns)
+{
+    Assert(Rows > 0);
+    Assert(Columns > 0);
+    
+    //XDrawRectangle(Display, Window, GraphicsContext, OffsetX, OffsetY, Width, Height);
+
+    f32 CellWidth = Width / (f32)Columns;
+    f32 CellHeight = Height / (f32)Rows;    
+
+    for( u32 i = 0; i <= Columns; i++ )
+    {
+        f32 ColumnOffset = i * CellWidth;
+        XDrawLine(Display, Window, GraphicsContext,
+                  ColumnOffset + OffsetX, OffsetY,
+                  ColumnOffset + OffsetX, Height + OffsetY
+                  );
+    }
+    
+    for( u32 i = 0; i <= Rows; i++ )
+    {
+        f32 RowOffset = i * CellHeight;
+        
+        XDrawLine(Display, Window, GraphicsContext,
+                  OffsetX, RowOffset + OffsetY,
+                  Width + OffsetX, RowOffset + OffsetY
+                  );
+    }
+
 }
 
 void
@@ -461,9 +514,15 @@ DrawWindow(calendar_year_node* CalendarYear)
 
                 XClearWindow(Display, Window);
 
-                DrawClock(Display, Window, GraphicsContext, WindowWidth, WindowHeight);
-                DrawCalendar(Display, Window, GraphicsContext, WindowWidth, WindowHeight, CalendarYear);
+                // DrawClock(Display, Window, GraphicsContext, WindowWidth, WindowHeight);
+                DrawCalendarHeader(Display, Window, GraphicsContext, WindowWidth, WindowHeight * 0.2);
+                //DrawCalendar(Display, Window, GraphicsContext, WindowWidth, WindowHeight * 0.8, CalendarYear);
 
+                DrawGrid(Display, Window, GraphicsContext,
+                         WindowWidth * 0.2, WindowHeight * 0.2,
+                         WindowWidth * 0.6, WindowHeight * 0.6,
+                         5, 7);
+                
                 XFlush(Display);
             } break;
             
