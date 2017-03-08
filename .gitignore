@@ -1,5 +1,5 @@
 #Ignore build folder
-/build/
+build/**
 
 #Ignore Emacs buffer and autosave files
 *~
@@ -11,3 +11,8 @@
 
 #Ignore vscode
 */.vscode
+
+#Ignore any not a c or cpp file in /src
+src/*
+!src/*.c
+!src/*.cpp
