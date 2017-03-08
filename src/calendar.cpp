@@ -41,8 +41,15 @@ typedef uint16_t u16;
 typedef uint32_t u32;
 typedef uint64_t u64;
 
-typedef float f32;
-typedef double f64;
+typedef float real32;
+typedef double real64;
+
+typedef real32 r32;
+typedef real64 r64;
+typedef real32 f32;
+typedef real64 f64;
+    
+
 
 typedef enum
 {
@@ -406,8 +413,6 @@ DrawGrid(Display* Display, Window Window, GC GraphicsContext, u32 OffsetX, u32 O
     Assert(Rows > 0);
     Assert(Columns > 0);
     
-    //XDrawRectangle(Display, Window, GraphicsContext, OffsetX, OffsetY, Width, Height);
-
     f32 CellWidth = Width / (f32)Columns;
     f32 CellHeight = Height / (f32)Rows;    
 
