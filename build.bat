@@ -8,5 +8,5 @@ set buildToolsPath="C:\Program Files (x86)\Microsoft Visual C++ Build Tools"
 call %buildToolsPath%\vcbuildtools.bat %platform%
 cd /d %projectDirectory%
 pushd build\windows
-cl -Zi ..\..\src\calendar.cpp user32.lib
+cl -Zi ..\..\src\win32_calendar.cpp user32.lib gdi32.lib
 popd
