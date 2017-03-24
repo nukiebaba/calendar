@@ -99,15 +99,19 @@ typedef struct calendar_year_node
     u16 Year;
     month Months[12];
     month_name CurrentMonth;
-    calendar_year_node* PreviousYear;
-    calendar_year_node* NextYear;
+    struct calendar_year_node* PreviousYear;
+    struct calendar_year_node* NextYear;
 } calendar_year_node;
 
 
-struct platform_window;
-platform_window* PlatformOpenWindow();
+
+typedef struct platform_window platform_window;
+
+struct platform_window* PlatformOpenWindow();
 void PlatformDrawWindow(platform_window* Window, calendar_year_node* CalendarYear);
 void PlatformCloseWindow(platform_window* Window);
+void PlatformDrawCalendarHeader(platform_window* Window);
+
 
 #define CALENDAR_H
 #endif

@@ -1,6 +1,5 @@
 #if defined(__linux__)
 
-
 #include <X11/Xlib.h>
 #include <sys/time.h>
 
@@ -9,14 +8,15 @@
 struct platform_window
 {
     Display* Display;
-    Window Window;
+    int Screen;
+    Window Handle;
     GC GraphicsContext;
-    int WindowWidth;
-    int WindowHeight;
+    int Width;
+    int Height;
 };
 
 void
-PlatformDrawClock(Display *Display, Window Window, GC GraphicsContext, int WindowWidth, int WindowHeight)
+PlatformDrawClock(platform_window* Window, int WindowWidth, int WindowHeight)
 {
     XPoint c = {WindowWidth * 0.5, WindowHeight * 0.5};
     int length = 500;
@@ -40,13 +40,13 @@ PlatformDrawClock(Display *Display, Window Window, GC GraphicsContext, int Windo
 
     XSegment line = {c.x, c.y, p.x, p.y};
                 
-    XDrawArc(Display, Window, GraphicsContext,
+    XDrawArc(Window->Display, Window->Handle, Window->GraphicsContext,
              arc.x, arc.y,
              arc.width, arc.height,
              arc.angle1, arc.angle2
              );
                 
-    XDrawLine(Display, Window, GraphicsContext,
+    XDrawLine(Window->Display, Window->Handle, Window->GraphicsContext,
               line.x1, line.y1, line.x2, line.y2
               );
 
@@ -58,7 +58,7 @@ PlatformDrawClock(Display *Display, Window Window, GC GraphicsContext, int Windo
     {
         int theta = i * 360 / 12 - thetaOffset;
 
-        XDrawString(Display, Window, GraphicsContext,
+        XDrawString(Window->Display, Window->Handle, Window->GraphicsContext,
                     WindowWidth / 2 + radius * cos(PI * theta / 180),
                     WindowHeight / 2 + radius * sin(PI * theta / 180),
                     ClockNumbers[i], strlen(ClockNumbers[i]));
@@ -66,7 +66,7 @@ PlatformDrawClock(Display *Display, Window Window, GC GraphicsContext, int Windo
 }
 
 void
-DrawCalendarHeader(Display* Display, Window Window, GC GraphicsContext, int WindowWidth, int WindowHeight)
+PlatformDrawCalendarHeader(platform_window* Window, int WindowWidth, int WindowHeight)
 {
     local_persist const char* WeekDays[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
 
@@ -77,14 +77,14 @@ DrawCalendarHeader(Display* Display, Window Window, GC GraphicsContext, int Wind
     for( int i = 0; i < ArrayCount(WeekDays); i++ )
     {
         u32 x = i * CellWidth + CellWidth / 2;
-        XDrawString(Display, Window, GraphicsContext,
+        XDrawString(Window->Display, Window->Handle, Window->GraphicsContext,
                     x, y,
                     WeekDays[i], strlen(WeekDays[i]));
     }
 }
 
 void
-DrawCalendar(Display* Display, Window Window, GC GraphicsContext, u32 WindowWidth, u32 WindowHeight, calendar_year_node* CalendarYear)
+PlatformDrawCalendar(platform_window* Window, u32 WindowWidth, u32 WindowHeight, calendar_year_node* CalendarYear)
 {
     month Month = CalendarYear->Months[CalendarYear->CurrentMonth];
     week_day StartingWeekDay = SUNDAY;
@@ -124,7 +124,7 @@ DrawCalendar(Display* Display, Window Window, GC GraphicsContext, u32 WindowWidt
     for( u32 i = 0; i <= NumberOfRows; i++ )
     {
         u32 GridLine = i * WindowHeight / NumberOfRows;
-        XDrawLine(Display, Window, GraphicsContext,
+        XDrawLine(Window->Display, Window->Handle, Window->GraphicsContext,
                   0, GridLine,
                   WindowWidth, GridLine
                   );
@@ -133,7 +133,7 @@ DrawCalendar(Display* Display, Window Window, GC GraphicsContext, u32 WindowWidt
     for( u32 i = 0; i <= NumberOfColumns; i++ )
     {
         u32 GridLine = i * WindowWidth / NumberOfColumns;
-        XDrawLine(Display, Window, GraphicsContext,
+        XDrawLine(Window->Display, Window->Handle, Window->GraphicsContext,
                   GridLine, 0,
                   GridLine, WindowHeight
                   );
@@ -142,7 +142,7 @@ DrawCalendar(Display* Display, Window Window, GC GraphicsContext, u32 WindowWidt
 }
 
 void 
-DrawGrid(Display* Display, Window Window, GC GraphicsContext, u32 OffsetX, u32 OffsetY, u32 Width, u32 Height, u32 Rows, u32 Columns)
+PlatformDrawGrid(platform_window* Window, u32 OffsetX, u32 OffsetY, u32 Width, u32 Height, u32 Rows, u32 Columns)
 {
     Assert(Rows > 0);
     Assert(Columns > 0);
@@ -153,7 +153,7 @@ DrawGrid(Display* Display, Window Window, GC GraphicsContext, u32 OffsetX, u32 O
     for( u32 i = 0; i <= Columns; i++ )
     {
         f32 ColumnOffset = i * CellWidth;
-        XDrawLine(Display, Window, GraphicsContext,
+        XDrawLine(Window->Display, Window->Handle, Window->GraphicsContext,
                   ColumnOffset + OffsetX, OffsetY,
                   ColumnOffset + OffsetX, Height + OffsetY
                   );
@@ -163,7 +163,7 @@ DrawGrid(Display* Display, Window Window, GC GraphicsContext, u32 OffsetX, u32 O
     {
         f32 RowOffset = i * CellHeight;
         
-        XDrawLine(Display, Window, GraphicsContext,
+        XDrawLine(Window->Display, Window->Handle, Window->GraphicsContext,
                   OffsetX, RowOffset + OffsetY,
                   Width + OffsetX, RowOffset + OffsetY
                   );
@@ -171,15 +171,14 @@ DrawGrid(Display* Display, Window Window, GC GraphicsContext, u32 OffsetX, u32 O
 
 }
 
-void *
-PlatformDrawWindow(calendar_year_node* CalendarYear)
+void 
+PlatformDrawWindow(platform_window* Window, calendar_year_node* CalendarYear)
 {
-   
     bool IsRunning = true;
     while(IsRunning)
     {
         XEvent Event;    
-        XNextEvent(Display, &Event);
+        XNextEvent(Window->Display, &Event);
         switch(Event.type)
         {
             case MapNotify:
@@ -195,7 +194,7 @@ PlatformDrawWindow(calendar_year_node* CalendarYear)
                     break;
                 }
                                 
-                XFlush(Display);
+                XFlush(Window->Display);
             } break;
              
             case KeyPress:
@@ -206,28 +205,27 @@ PlatformDrawWindow(calendar_year_node* CalendarYear)
                 }
 
                 XGCValues Values;
-                XGetGCValues(Display, GraphicsContext, GCForeground, &Values);
-                if( Values.foreground == WhiteColor )
+                XGetGCValues(Window->Display, Window->GraphicsContext, GCForeground, &Values);
+                if( Values.foreground == WhitePixel(Window->Display, Window->Screen) )
                 {
-                    XSetForeground(Display, GraphicsContext, BlackColor);
+                    XSetForeground(Window->Display, Window->GraphicsContext, BlackPixel(Window->Display, Window->Screen));
                 }
                 else
                 {
-                    XSetForeground(Display, GraphicsContext, BlackColor);
+                    XSetForeground(Window->Display, Window->GraphicsContext, BlackPixel(Window->Display, Window->Screen));
                 }
 
-                XClearWindow(Display, Window);
+                XClearWindow(Window->Display, Window->Handle);
 
-                DrawClock(Display, Window, GraphicsContext, WindowWidth, WindowHeight);
-                DrawCalendarHeader(Display, Window, GraphicsContext, WindowWidth, WindowHeight * 0.2);
-                DrawCalendar(Display, Window, GraphicsContext, WindowWidth, WindowHeight * 0.8, CalendarYear);
+                PlatformDrawClock(Window, Window->Width, Window->Height);
+                PlatformDrawCalendarHeader(Window, Window->Width, Window->Height * 0.2);
+                PlatformDrawCalendar(Window, Window->Width, Window->Height * 0.8, CalendarYear);
 
-                DrawGrid(Display, Window, GraphicsContext,
-                         WindowWidth * 0.2, WindowHeight * 0.2,
-                         WindowWidth * 0.6, WindowHeight * 0.6,
-                         5, 7);
+                PlatformDrawGrid(Window, Window->Width * 0.2, Window->Height * 0.2,
+                                 Window->Width * 0.6, Window->Height * 0.6,
+                                 5, 7);
                 
-                XFlush(Display);
+                XFlush(Window->Display);
             } break;
             
             case ClientMessage:
@@ -243,74 +241,63 @@ PlatformDrawWindow(calendar_year_node* CalendarYear)
     }
 }
 
-Display*
-PlatformOpenDisplay()
+platform_window*
+PlatformOpenWindow()
 {
-    Display *Display = XOpenDisplay(NULL);
-    Assert(Display != NULL);
-    return Display;
-}
+    platform_window* Window = (platform_window*) malloc(sizeof(platform_window));
+    
+    Window->Display = XOpenDisplay(NULL);
+    Assert(Window->Display != NULL);
+    
+    Window->Screen = DefaultScreen(Window->Display);
 
-void
-PlatformCloseDisplay(Display* Display)
-{
-    XCloseDisplay(Display);
-}
+    unsigned long BlackColor = BlackPixel(Window->Display, Window->Screen);
+    unsigned long WhiteColor = WhitePixel(Window->Display, Window->Screen);
 
-platform_window
-PlatformOpenWindow(Display* Display)
-{
-    int Screen = DefaultScreen(Display);
+    Window->Width = DisplayWidth(Window->Display, Window->Screen);
+    Window->Height = DisplayHeight(Window->Display, Window->Screen);
 
-    Window Window = XCreateSimpleWindow(Display, RootWindow(Display, Screen),
-                                        0, 0, WindowWidth, WindowHeight,
-                                        1, BlackColor, WhiteColor);
+    
+    Window->Handle = XCreateSimpleWindow(Window->Display,
+                                         RootWindow(Window->Display, Window->Screen),
+                                         0, 0, Window->Width, Window->Height,
+                                         1, BlackColor, WhiteColor);
+    Assert(Window->Handle != 0);    
     return Window;
 }
 
 void
-PlatformCloseWindow(Display* Display, Window Window)
+PlatformCloseWindow(platform_window* Window)
 {
-    XDestroyWindow(Display, Window);
+    XDestroyWindow(Window->Display, Window->Handle);
+    XCloseDisplay(Window->Display);
 }
 
 int main(int argc, char *argv[])
 {
+    platform_window* Window = PlatformOpenWindow();
+
+    XSelectInput(Window->Display, Window->Handle, ExposureMask | KeyPressMask );
+    XMapWindow(Window->Display, Window->Handle);
 
 
-    int DisplayWidth = DisplayWidth(Display, Screen);
-    int DisplayHeight = DisplayHeight(Display, Screen);
+    Window->GraphicsContext = XCreateGC(Window->Display, Window->Handle, 0, NULL);
 
-    int WindowWidth = DisplayWidth * 0.25;
-    int WindowHeight = DisplayHeight * 0.75;
-    
-    unsigned long BlackColor = BlackPixel(Display, Screen);
-    unsigned long WhiteColor = WhitePixel(Display, Screen);
-
-
-    XSelectInput(Display, Window, ExposureMask | KeyPressMask );
-    XMapWindow(Display, Window);
-
-    
-    GC GraphicsContext = XCreateGC(Display, Window, 0, NULL);
-
-    XSetForeground(Display, GraphicsContext, BlackColor);
-    XSetBackground(Display, GraphicsContext, WhiteColor);
-
+    XSetForeground(Window->Display, Window->GraphicsContext,
+                   BlackPixel(Window->Display, Window->Screen));
+    XSetBackground(Window->Display, Window->GraphicsContext, WhitePixel(Window->Display, Window->Screen));
 
     char *FontName = (char *) "-*-helvetica-*-r-*-*-50-*-*-*-*-*-*-*";
-    XFontStruct *FontInfo = XLoadQueryFont(Display, FontName);
+    XFontStruct *FontInfo = XLoadQueryFont(Window->Display, FontName);
 
     Assert(FontInfo != NULL);
 
-    XSetFont(Display, GraphicsContext, FontInfo->fid);
+    XSetFont(Window->Display, Window->GraphicsContext, FontInfo->fid);
     
     //Game logic
-    GameMain(argc, argv);
-        
-    PlatformCloseWindow(Display, Window);
+    GameMain(argc, argv, Window);        
 
-    PlatformCloseDisplay(Display);
+    PlatformCloseWindow(Window);
 }
 
 #endif

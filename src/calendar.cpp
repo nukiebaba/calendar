@@ -168,7 +168,7 @@ CalendarScheduleInititalize( calendar_year_node* Calendar, calendar_schedule* Sc
     Schedule->Entries = (calendar_schedule_entry*) malloc( Schedule->FreeEntryCount * sizeof (calendar_schedule_entry) );
 }
 
-int GameMain(int argc, char *argv[])
+int GameMain(int argc, char *argv[], platform_window* Window)
 {
     calendar_year_node InitialCalendarYear = {2016, {
         {JANUARY,   "January",   31},
@@ -189,7 +189,7 @@ int GameMain(int argc, char *argv[])
     InitialCalendarYear.NextYear = NextCalendarYear;
     NextCalendarYear->Year = InitialCalendarYear.Year + 1;
 
-    //PrintCalendarYear(&GlobalInitialCalendarYear);
+    //PrintCalendarYear(&InitialCalendarYear);
     //PrintCalendarYear(NextCalendarYear);
 
     month CurrentMonth = InitialCalendarYear.Months[InitialCalendarYear.CurrentMonth];
@@ -229,14 +229,11 @@ int GameMain(int argc, char *argv[])
 
 	}
     }
-    
-    platform_window* Window = PlatformOpenWindow();
+
     PlatformDrawWindow(Window, &InitialCalendarYear);
-    PlatformCloseWindow(Window);
     
     free(NextCalendarYear);
     free(Schedule->Entries);
     free(Schedule);
-    
     return 0;
 }
