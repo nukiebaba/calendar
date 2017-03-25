@@ -1,8 +1,8 @@
 #include "calendar.h"
 
-inline bool IsLeapYear(int Year)
+inline b32 IsLeapYear(int Year)
 {
-    bool Result = Year % 4 == 0 && (Year % 100 != 0 || Year % 400 == 0);
+    b32 Result = Year % 4 == 0 && (Year % 100 != 0 || Year % 400 == 0);
   
     return Result;
 }
@@ -92,7 +92,7 @@ PrintCalendarMonthHeader()
 }
 
 void
-PrintCalendarMonth(month Month, week_day StartingWeekDay, bool IsLeapYear = false)
+PrintCalendarMonth(month Month, week_day StartingWeekDay, b32 IsLeapYear = false)
 {
 
 #if false
@@ -168,6 +168,42 @@ CalendarScheduleInititalize( calendar_year_node* Calendar, calendar_schedule* Sc
     Schedule->Entries = (calendar_schedule_entry*) malloc( Schedule->FreeEntryCount * sizeof (calendar_schedule_entry) );
 }
 
+
+void
+PrintCalendar(calendar_year_node* CalendarYear)
+{
+    month Month = CalendarYear->Months[CalendarYear->CurrentMonth];
+    week_day StartingWeekDay = SUNDAY;
+    int DaysInMonth = Month.Days;
+    
+    if( Month.Index == FEBRUARY && IsLeapYear(CalendarYear->Year) )
+    {
+        DaysInMonth += 1;
+    }
+    
+    for( int i = (StartingWeekDay + 1) % 7; i > 0; i--)
+    {
+        printf("[   ]");
+    }
+  
+    for( int i = 0; i < Month.Days; i++)
+    {
+        printf("[%3d]", i+1);
+        if( (i + StartingWeekDay) % 7 == SATURDAY )
+	{
+            printf("\n");
+	}
+    }
+
+    for( int i = (Month.Days + StartingWeekDay) % 7; i < SUNDAY; i++)
+    {
+        printf("[   ]");
+    }
+  
+    printf("\n");
+}
+
+
 int GameMain(int argc, char *argv[], platform_window* Window)
 {
     calendar_year_node InitialCalendarYear = {2016, {
@@ -230,7 +266,11 @@ int GameMain(int argc, char *argv[], platform_window* Window)
 	}
     }
 
-    PlatformDrawWindow(Window, &InitialCalendarYear);
+    b32 IsRunning = true;
+    while(IsRunning)
+    {
+        IsRunning = PlatformDrawWindow(Window, &InitialCalendarYear);
+    }
     
     free(NextCalendarYear);
     free(Schedule->Entries);

@@ -46,6 +46,8 @@ typedef real64 r64;
 typedef real32 f32;
 typedef real64 f64;
 
+typedef int b32;
+
 typedef enum
 {
     MONDAY,
@@ -108,10 +110,9 @@ typedef struct calendar_year_node
 typedef struct platform_window platform_window;
 
 struct platform_window* PlatformOpenWindow();
-void PlatformDrawWindow(platform_window* Window, calendar_year_node* CalendarYear);
+b32 PlatformDrawWindow(platform_window* Window, calendar_year_node* CalendarYear);
 void PlatformCloseWindow(platform_window* Window);
 void PlatformDrawCalendarHeader(platform_window* Window);
-
 
 #define CALENDAR_H
 #endif

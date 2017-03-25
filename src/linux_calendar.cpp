@@ -1,9 +1,9 @@
 #if defined(__linux__)
 
+#include "calendar.cpp"
+
 #include <X11/Xlib.h>
 #include <sys/time.h>
-
-#include "calendar.cpp"
 
 struct platform_window
 {
@@ -13,6 +13,7 @@ struct platform_window
     GC GraphicsContext;
     int Width;
     int Height;
+    bool IsRunning;
 };
 
 void
@@ -50,17 +51,17 @@ PlatformDrawClock(platform_window* Window, int WindowWidth, int WindowHeight)
               line.x1, line.y1, line.x2, line.y2
               );
 
-    local_persist const char* ClockNumbers[] = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"};
+    local_persist const char* ClockNumbers[] = {"12", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"};
 
     
     int padding = 3;
-    for(int i = 1; i <= 12; i++)
+    for(int i = 0; i < ArrayCount(ClockNumbers); i++)
     {
-        int theta = i * 360 / 12 - thetaOffset;
+        int NumberTheta = i * 360 / ArrayCount(ClockNumbers) - thetaOffset;
 
         XDrawString(Window->Display, Window->Handle, Window->GraphicsContext,
-                    WindowWidth / 2 + radius * cos(PI * theta / 180),
-                    WindowHeight / 2 + radius * sin(PI * theta / 180),
+                    WindowWidth / 2 + radius * cos(PI * NumberTheta / 180),
+                    WindowHeight / 2 + radius * sin(PI * NumberTheta / 180),
                     ClockNumbers[i], strlen(ClockNumbers[i]));
     }
 }
@@ -90,32 +91,6 @@ PlatformDrawCalendar(platform_window* Window, u32 WindowWidth, u32 WindowHeight,
     week_day StartingWeekDay = SUNDAY;
     int DaysInMonth = Month.Days;
     
-    if( Month.Index == FEBRUARY && IsLeapYear(CalendarYear->Year) )
-    {
-        DaysInMonth += 1;
-    }
-    
-    for( int i = (StartingWeekDay + 1) % 7; i > 0; i--)
-    {
-        printf("[   ]");
-    }
-  
-    for( int i = 0; i < Month.Days; i++)
-    {
-        printf("[%3d]", i+1);
-        if( (i + StartingWeekDay) % 7 == SATURDAY )
-	{
-            printf("\n");
-	}
-    }
-
-    for( int i = (Month.Days + StartingWeekDay) % 7; i < SUNDAY; i++)
-    {
-        printf("[   ]");
-    }
-  
-    printf("\n");
-
     u32 NumberOfColumns = 7;
     u32 NumberOfRows = ceil((float) DaysInMonth / NumberOfColumns);
 
@@ -171,70 +146,67 @@ PlatformDrawGrid(platform_window* Window, u32 OffsetX, u32 OffsetY, u32 Width, u
 
 }
 
-void 
+b32 
 PlatformDrawWindow(platform_window* Window, calendar_year_node* CalendarYear)
 {
-    bool IsRunning = true;
-    while(IsRunning)
+    XEvent Event;    
+    XNextEvent(Window->Display, &Event);
+    switch(Event.type)
     {
-        XEvent Event;    
-        XNextEvent(Window->Display, &Event);
-        switch(Event.type)
+        case MapNotify:
         {
-            case MapNotify:
-            {
                 
-                printf("%d", Event.type);
-            } break;
+            printf("%d", Event.type);
+        } break;
             
-            case Expose:
+        case Expose:
+        {
+            if( Event.xexpose.count > 0 )
             {
-                if( Event.xexpose.count > 0 )
-                {
-                    break;
-                }
+                break;
+            }
                                 
-                XFlush(Window->Display);
-            } break;
+            XFlush(Window->Display);
+        } break;
              
-            case KeyPress:
+        case KeyPress:
+        {
+            if( Event.xkey.keycode == 24 || Event.xkey.keycode == 9 )
             {
-                if( Event.xkey.keycode == 24 || Event.xkey.keycode == 9 )
-                {
-                    IsRunning = false;
-                }
+                return false;
+            }
 
-                XGCValues Values;
-                XGetGCValues(Window->Display, Window->GraphicsContext, GCForeground, &Values);
-                if( Values.foreground == WhitePixel(Window->Display, Window->Screen) )
-                {
-                    XSetForeground(Window->Display, Window->GraphicsContext, BlackPixel(Window->Display, Window->Screen));
-                }
-                else
-                {
-                    XSetForeground(Window->Display, Window->GraphicsContext, BlackPixel(Window->Display, Window->Screen));
-                }
+            XGCValues Values;
+            XGetGCValues(Window->Display, Window->GraphicsContext, GCForeground, &Values);
+            if( Values.foreground == WhitePixel(Window->Display, Window->Screen) )
+            {
+                XSetForeground(Window->Display, Window->GraphicsContext, BlackPixel(Window->Display, Window->Screen));
+            }
+            else
+            {
+                XSetForeground(Window->Display, Window->GraphicsContext, BlackPixel(Window->Display, Window->Screen));
+            }
 
-                XClearWindow(Window->Display, Window->Handle);
+            XClearWindow(Window->Display, Window->Handle);
 
-                PlatformDrawClock(Window, Window->Width, Window->Height);
-                PlatformDrawCalendarHeader(Window, Window->Width, Window->Height * 0.2);
-                PlatformDrawCalendar(Window, Window->Width, Window->Height * 0.8, CalendarYear);
+            PlatformDrawClock(Window, Window->Width, Window->Height);
+            PlatformDrawCalendarHeader(Window, Window->Width, Window->Height * 0.2);
+            PlatformDrawCalendar(Window, Window->Width, Window->Height * 0.8, CalendarYear);
 
-                XFlush(Window->Display);
-            } break;
+            XFlush(Window->Display);
+        } break;
             
-            case ClientMessage:
-            {
+        case ClientMessage:
+        {
                 
-            } break;
+        } break;
 
-            default:
-            {
+        default:
+        {
 
-            } break;
-        }
+        } break;
     }
+    return true;
 }
 
 platform_window*
@@ -313,7 +285,7 @@ int main(int argc, char *argv[])
     Assert(FontInfo != NULL);
 
     XSetFont(Window->Display, Window->GraphicsContext, FontInfo->fid);
-    
+
     //Game logic
     GameMain(argc, argv, Window);        
 
