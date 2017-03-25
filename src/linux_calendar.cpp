@@ -66,11 +66,11 @@ PlatformDrawClock(platform_window* Window, int WindowWidth, int WindowHeight)
 }
 
 void
-PlatformDrawCalendarHeader(platform_window* Window, int WindowWidth, int WindowHeight)
+PlatformDrawCalendarHeader(platform_window* Window, int Width, int Height)
 {
     local_persist const char* WeekDays[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
 
-    u32 CellWidth = WindowWidth / ArrayCount(WeekDays);
+    u32 CellWidth = Width / ArrayCount(WeekDays);
 
     u32 y = CellWidth / 2;
     
@@ -221,10 +221,6 @@ PlatformDrawWindow(platform_window* Window, calendar_year_node* CalendarYear)
                 PlatformDrawCalendarHeader(Window, Window->Width, Window->Height * 0.2);
                 PlatformDrawCalendar(Window, Window->Width, Window->Height * 0.8, CalendarYear);
 
-                PlatformDrawGrid(Window, Window->Width * 0.2, Window->Height * 0.2,
-                                 Window->Width * 0.6, Window->Height * 0.6,
-                                 5, 7);
-                
                 XFlush(Window->Display);
             } break;
             
@@ -251,16 +247,40 @@ PlatformOpenWindow()
     
     Window->Screen = DefaultScreen(Window->Display);
 
+    
     unsigned long BlackColor = BlackPixel(Window->Display, Window->Screen);
     unsigned long WhiteColor = WhitePixel(Window->Display, Window->Screen);
 
-    Window->Width = DisplayWidth(Window->Display, Window->Screen);
-    Window->Height = DisplayHeight(Window->Display, Window->Screen);
+    
+    int AspectRatio[2] = {16, 9};
+    int DisplayHeight = DisplayHeight(Window->Display, Window->Screen);
+    int DisplayWidth = DisplayWidth(Window->Display, Window->Screen);
 
+    int AspectRatioHeight = DisplayHeight;
+    int AspectRatioWidth = (AspectRatioHeight / AspectRatio[1]) * AspectRatio[0];
+
+    printf("Display{%d,%d}, AspectRatio{%d,%d}", DisplayWidth, DisplayHeight, AspectRatioWidth, AspectRatioHeight);
+    
+    Window->Height = AspectRatioHeight;
+    if( DisplayWidth < AspectRatioWidth )
+    {
+        Window->Width = DisplayWidth;
+    }
+    else
+    {
+        Window->Width = AspectRatioWidth;
+    }
+
+    Assert(AspectRatioWidth <= DisplayWidth);
+    Assert(AspectRatioHeight == DisplayHeight);    
+
+    Window->Width *= 0.8;
+    Window->Height *= 0.8;
     
     Window->Handle = XCreateSimpleWindow(Window->Display,
                                          RootWindow(Window->Display, Window->Screen),
-                                         0, 0, Window->Width, Window->Height,
+                                         100, 100,
+                                         Window->Width, Window->Height,
                                          1, BlackColor, WhiteColor);
     Assert(Window->Handle != 0);    
     return Window;
