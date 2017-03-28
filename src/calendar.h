@@ -18,6 +18,9 @@
 
 #define PI 3.14159265f
 
+#ifdef NDEBUG
+#define Assert(Expression) ((void)0)
+#else
 #define Assert(Expression)                                              \
 {                                                                       \
     if( !(Expression) )                                                 \
@@ -26,8 +29,9 @@
                 __FILE__, __func__, __LINE__, #Expression);             \
         exit(EXIT_FAILURE);                                             \
     }                                                                   \
-}                                                                       \
- 
+}                                                                       
+#endif
+
 typedef int8_t i8;
 typedef int16_t i16;
 typedef int32_t i32;
@@ -105,11 +109,9 @@ typedef struct calendar_year_node
     struct calendar_year_node* NextYear;
 } calendar_year_node;
 
-
-
 typedef struct platform_window platform_window;
 
-struct platform_window* PlatformOpenWindow();
+platform_window* PlatformOpenWindow();
 b32 PlatformDrawWindow(platform_window* Window, calendar_year_node* CalendarYear);
 void PlatformCloseWindow(platform_window* Window);
 void PlatformDrawCalendarHeader(platform_window* Window);

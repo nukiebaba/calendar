@@ -1,17 +1,20 @@
 #if defined(_WIN32) || defined(_WIN64)
 
-#include <windows.h>
-
 #include "calendar.cpp"
+
+#include <windows.h>
 
 struct platform_window
 {
     HWND Handle;
     HDC DeviceContext;
     WNDCLASS WindowClass;
-    int WindowWidth;
-    int WindowHeight;
+    int Width;
+    int Height;
 };
+
+
+
 
 void
 PlatformDrawClock(platform_window* Window)
@@ -37,16 +40,20 @@ DrawGrid(platform_window* Window, u32 OffsetX, u32 OffsetY, u32 Width, u32 Heigh
 
 }
 
-void
+b32
 PlatformDrawWindow(platform_window* Window, calendar_year_node* CalendarYear)
 {
-    return;
+    return false;
 }
 
 platform_window*
 PlatformOpenWindow()
 {
     platform_window* Window = (platform_window*) malloc(sizeof platform_window);
+
+    //Window->Handle = 
+
+    
     return Window;
 }
 
@@ -65,17 +72,12 @@ WinMain(HINSTANCE Instance,
         LPSTR CommandLine,
         int ShowCode)
 {
-    /*
-    LPWSTR* CommandLineArguments;
-    int NumberOfArguments;
+    WNDCLASS WindowClass = {};
 
-    CommandLineArguments = CommandLineToArgvW((LPCWSTR)CommandLine, &NumberOfArguments);
-    if(CommandLineArguments)
-    { 
-        GameMain(NumberOfArguments, (char**) CommandLineArguments);
-    }
-    */
+    
 
+    //GameMain(0, NULL, NULL);
+    
     return 0;
 }
 

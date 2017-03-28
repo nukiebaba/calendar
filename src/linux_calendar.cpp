@@ -17,9 +17,9 @@ struct platform_window
 };
 
 void
-PlatformDrawClock(platform_window* Window, int WindowWidth, int WindowHeight)
+PlatformDrawClock(platform_window* Window)
 {
-    XPoint c = {WindowWidth * 0.5, WindowHeight * 0.5};
+    XPoint c = {Window->Width * 0.5, Window->Height * 0.5};
     int length = 500;
                 
     timeval TimeValue;
