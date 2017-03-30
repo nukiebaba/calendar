@@ -13,6 +13,15 @@ struct platform_window
     int Height;
 };
 
+struct platform_event
+{
+    MSG Message;
+    UINT MessageId;
+    WPARAM WParam;
+    LPARAM LParam;
+    LRESULT Result;
+};
+
 void
 PlatformDrawClock(platform_window* Window)
 {
@@ -43,16 +52,6 @@ PlatformDrawWindow(platform_window* Window, calendar_year_node* CalendarYear)
     return false;
 }
 
-platform_window*
-PlatformOpenWindow()
-{
-    platform_window* Window = (platform_window*) malloc(sizeof platform_window);
-
-    //Window->Handle = 
-
-    
-    return Window;
-}
 
 void
 PlatformCloseWindow(platform_window* Window)
@@ -63,15 +62,16 @@ PlatformCloseWindow(platform_window* Window)
     }
 }
 
-LRESULT CALLBACK
-MainWindowCallback(HWND Window,
-                   UINT Message,
-                   WPARAM WParam,
-                   LPARAM LParam)
+b32
+PlatformDrawWindow(platform_window* Window)
 {
-    LRESULT Result = 0;
-    
-    switch(Message)
+    return false;
+}
+
+void
+PlatformHandleEvent(platform_window Window, platform_event* Event)
+{
+    switch(Event->MessageId)
     {
         case WM_SIZE:
         {
@@ -81,12 +81,13 @@ MainWindowCallback(HWND Window,
         case WM_DESTROY:
         {
             OutputDebugStringA("WM_DESTROY\n");
+            GlobalIsRunning = false;
         } break;
 
         case WM_CLOSE:
         {
-            PostQuitMessage(0);
             OutputDebugStringA("WM_CLOSE\n");
+            GlobalIsRunning = false;
         } break;
 
         case WM_ACTIVATEAPP:
@@ -97,41 +98,57 @@ MainWindowCallback(HWND Window,
         case WM_PAINT:
         {
             PAINTSTRUCT Paint;
-            HDC DeviceContext = BeginPaint(Window, &Paint);
+            HDC DeviceContext = BeginPaint(Window.Handle, &Paint);
             int X = Paint.rcPaint.left;
             int Y = Paint.rcPaint.top;
             LONG Width = Paint.rcPaint.right - Paint.rcPaint.left;
             LONG Height = Paint.rcPaint.bottom - Paint.rcPaint.top;
             PatBlt(DeviceContext, X, Y, Width, Height, WHITENESS);
-            EndPaint(Window, &Paint);
+            EndPaint(Window.Handle, &Paint);
         } break;
 
         default:
         {
-            Result = DefWindowProc(Window, Message, WParam, LParam);
+            Event->Result = DefWindowProc(Window.Handle, Event->MessageId, Event->WParam, Event->LParam);
         } break;
     }
-
-    return Result;
 }
 
-int CALLBACK
-WinMain(HINSTANCE Instance,
-        HINSTANCE PrevInstance,
-        LPSTR CommandLine,
-        int ShowCode)
+LRESULT CALLBACK
+MainWindowCallback(HWND WindowHandle,
+                   UINT MessageId,
+                   WPARAM WParam,
+                   LPARAM LParam)
 {
-    WNDCLASS WindowClass = {};
+    platform_window Window = {};
+    Window.Handle = WindowHandle;
+    
+    platform_event Event = {};
+    Event.MessageId = MessageId;
+    Event.WParam = WParam;
+    Event.LParam = LParam;
+
+    PlatformHandleEvent(Window, &Event);
+    
+    return Event.Result;
+}
+
+platform_window
+PlatformOpenWindow()
+{
+    platform_window Result = {};
+    
+    WNDCLASS WindowClass = Result.WindowClass;
 
     WindowClass.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
     WindowClass.lpfnWndProc = MainWindowCallback;
-    WindowClass.hInstance = Instance;
+    WindowClass.hInstance = GetModuleHandle(NULL); // Get the handle of exe
     //    WindowClass.hIcon;
     WindowClass.lpszClassName = "CalendarWindowClass";
 
     if( RegisterClass(&WindowClass) )
     {
-        HWND WindowHandle =
+        Result.Handle =
             CreateWindowEx(0,
                            WindowClass.lpszClassName,
                            "Calendar",
@@ -142,32 +159,49 @@ WinMain(HINSTANCE Instance,
                            CW_USEDEFAULT, //Height
                            0,
                            0,
-                           Instance,
+                           WindowClass.hInstance, // Get instance of exe
                            0);
-        if( WindowHandle )
-        {
-            MSG Message;
-            for(;;)
-            {
-                BOOL MessageResult = GetMessage(&Message, 0, 0, 0);
-                if( MessageResult > 0 )
-                {
-                    TranslateMessage(&Message); //Prepares message
-                    DispatchMessage(&Message);
-                }
-                else
-                {
-                    break;
-                }
-            }
-        }
     }
     else
     {
         // @Logging
     }
+
+    Assert(Result.Handle);
+
+    if(Result.Handle)
+    {
+        // @Logging
+        Result = {};
+    }
     
-    GameMain(0, NULL, NULL);
+    return Result;
+}
+
+platform_event* PlatformGetNextEvent(platform_window* Window)
+{
+    platform_event* Result = {};
+    BOOL MessageResult = GetMessage(&Result->Message, 0, 0, 0);
+
+    if( MessageResult > 0 )
+    {
+        Result->MessageId = Result->Message.message;
+        TranslateMessage(&Result->Message);
+        DispatchMessage(&Result->Message);
+    }
+    
+    return Result;
+}
+
+int CALLBACK
+WinMain(HINSTANCE Instance,
+        HINSTANCE PrevInstance,
+        LPSTR CommandLine,
+        int ShowCode)
+{
+    platform_window Window = PlatformOpenWindow();
+    
+    GameMain(0, NULL, &Window);
     
     return 0;
 }

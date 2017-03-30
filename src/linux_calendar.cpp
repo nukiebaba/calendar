@@ -16,6 +16,11 @@ struct platform_window
     bool IsRunning;
 };
 
+struct platform_event
+{
+    XEvent Event;
+};
+
 void
 PlatformDrawClock(platform_window* Window, int Width, int Height)
 {
@@ -209,52 +214,52 @@ PlatformDrawWindow(platform_window* Window, calendar_year_node* CalendarYear)
     return true;
 }
 
-platform_window*
+platform_window
 PlatformOpenWindow()
 {
-    platform_window* Window = (platform_window*) malloc(sizeof(platform_window));
+    platform_window Result = {}
     
-    Window->Display = XOpenDisplay(NULL);
-    Assert(Window->Display != NULL);
+    Window.Display = XOpenDisplay(NULL);
+    Assert(Window.Display != NULL);
     
-    Window->Screen = DefaultScreen(Window->Display);
+    Window.Screen = DefaultScreen(Window.Display);
 
     
-    unsigned long BlackColor = BlackPixel(Window->Display, Window->Screen);
-    unsigned long WhiteColor = WhitePixel(Window->Display, Window->Screen);
+    unsigned long BlackColor = BlackPixel(Window.Display, Window.Screen);
+    unsigned long WhiteColor = WhitePixel(Window.Display, Window.Screen);
 
     
     int AspectRatio[2] = {16, 9};
-    int DisplayHeight = DisplayHeight(Window->Display, Window->Screen);
-    int DisplayWidth = DisplayWidth(Window->Display, Window->Screen);
+    int DisplayHeight = DisplayHeight(Window.Display, Window.Screen);
+    int DisplayWidth = DisplayWidth(Window.Display, Window.Screen);
 
     int AspectRatioHeight = DisplayHeight;
     int AspectRatioWidth = (AspectRatioHeight / AspectRatio[1]) * AspectRatio[0];
 
     printf("Display{%d,%d}, AspectRatio{%d,%d}", DisplayWidth, DisplayHeight, AspectRatioWidth, AspectRatioHeight);
     
-    Window->Height = AspectRatioHeight;
+    Window.Height = AspectRatioHeight;
     if( DisplayWidth < AspectRatioWidth )
     {
-        Window->Width = DisplayWidth;
+        Window.Width = DisplayWidth;
     }
     else
     {
-        Window->Width = AspectRatioWidth;
+        Window.Width = AspectRatioWidth;
     }
 
     Assert(AspectRatioWidth <= DisplayWidth);
     Assert(AspectRatioHeight == DisplayHeight);    
 
-    Window->Width *= 0.8;
-    Window->Height *= 0.8;
+    Window.Width *= 0.8;
+    Window.Height *= 0.8;
     
-    Window->Handle = XCreateSimpleWindow(Window->Display,
-                                         RootWindow(Window->Display, Window->Screen),
+    Window.Handle = XCreateSimpleWindow(Window.Display,
+                                         RootWindow(Window.Display, Window.Screen),
                                          100, 100,
-                                         Window->Width, Window->Height,
+                                         Window.Width, Window.Height,
                                          1, BlackColor, WhiteColor);
-    Assert(Window->Handle != 0);    
+    Assert(Window.Handle != 0);    
     return Window;
 }
 

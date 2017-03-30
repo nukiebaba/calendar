@@ -1,5 +1,8 @@
 #include "calendar.h"
 
+// Global vbariable to indicate the game is running
+global bool GlobalIsRunning;
+
 inline b32 IsLeapYear(int Year)
 {
     b32 Result = Year % 4 == 0 && (Year % 100 != 0 || Year % 400 == 0);
@@ -168,7 +171,6 @@ CalendarScheduleInititalize( calendar_year_node* Calendar, calendar_schedule* Sc
     Schedule->Entries = (calendar_schedule_entry*) malloc( Schedule->FreeEntryCount * sizeof (calendar_schedule_entry) );
 }
 
-
 void
 PrintCalendar(calendar_year_node* CalendarYear)
 {
@@ -265,11 +267,14 @@ int GameMain(int argc, char *argv[], platform_window* Window)
 
 	}
     }
-
-    b32 IsRunning = true;
-    while(IsRunning)
+    
+    if( Window )
     {
-        IsRunning = PlatformDrawWindow(Window, &InitialCalendarYear);
+        GlobalIsRunning = true;
+        while(GlobalIsRunning)
+        {
+            platform_event* Event = PlatformGetNextEvent(Window);
+        }
     }
     
     free(NextCalendarYear);

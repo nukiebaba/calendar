@@ -110,12 +110,16 @@ typedef struct calendar_year_node
 } calendar_year_node;
 
 typedef struct platform_window platform_window;
+typedef struct platform_event platform_event;
 
-platform_window* PlatformOpenWindow();
+platform_window PlatformOpenWindow();
 b32 PlatformDrawWindow(platform_window* Window, calendar_year_node* CalendarYear);
 void PlatformCloseWindow(platform_window* Window);
 void PlatformDrawCalendarHeader(platform_window* Window);
 void PlatformDrawClock(platform_window* Window, int Width, int Height);
+
+
+platform_event* PlatformGetNextEvent(platform_window* Window);
 
 
 #define CALENDAR_H
