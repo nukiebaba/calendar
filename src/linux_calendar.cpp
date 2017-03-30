@@ -17,9 +17,9 @@ struct platform_window
 };
 
 void
-PlatformDrawClock(platform_window* Window)
+PlatformDrawClock(platform_window* Window, int Width, int Height)
 {
-    XPoint c = {Window->Width * 0.5, Window->Height * 0.5};
+    XPoint c = {Width * 0.5, Height * 0.5};
     int length = 500;
                 
     timeval TimeValue;
@@ -60,8 +60,8 @@ PlatformDrawClock(platform_window* Window)
         int NumberTheta = i * 360 / ArrayCount(ClockNumbers) - thetaOffset;
 
         XDrawString(Window->Display, Window->Handle, Window->GraphicsContext,
-                    WindowWidth / 2 + radius * cos(PI * NumberTheta / 180),
-                    WindowHeight / 2 + radius * sin(PI * NumberTheta / 180),
+                    Width / 2 + radius * cos(PI * NumberTheta / 180),
+                    Height / 2 + radius * sin(PI * NumberTheta / 180),
                     ClockNumbers[i], strlen(ClockNumbers[i]));
     }
 }

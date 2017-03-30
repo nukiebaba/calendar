@@ -115,6 +115,8 @@ platform_window* PlatformOpenWindow();
 b32 PlatformDrawWindow(platform_window* Window, calendar_year_node* CalendarYear);
 void PlatformCloseWindow(platform_window* Window);
 void PlatformDrawCalendarHeader(platform_window* Window);
+void PlatformDrawClock(platform_window* Window, int Width, int Height);
+
 
 #define CALENDAR_H
 #endif
