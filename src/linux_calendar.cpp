@@ -1,7 +1,5 @@
 #if defined(__linux__)
 
-#include "calendar.cpp"
-
 #include <X11/Xlib.h>
 #include <sys/time.h>
 
@@ -21,8 +19,10 @@ struct platform_event
     XEvent Event;
 };
 
+#include "calendar.cpp"
+
 void
-PlatformDrawClock(platform_window* Window, int Width, int Height)
+PlatformDrawClock(platform_window Window, int Width, int Height)
 {
     XPoint c = {Width * 0.5, Height * 0.5};
     int length = 500;
@@ -46,13 +46,13 @@ PlatformDrawClock(platform_window* Window, int Width, int Height)
 
     XSegment line = {c.x, c.y, p.x, p.y};
                 
-    XDrawArc(Window->Display, Window->Handle, Window->GraphicsContext,
+    XDrawArc(Window.Display, Window.Handle, Window.GraphicsContext,
              arc.x, arc.y,
              arc.width, arc.height,
              arc.angle1, arc.angle2
              );
                 
-    XDrawLine(Window->Display, Window->Handle, Window->GraphicsContext,
+    XDrawLine(Window.Display, Window.Handle, Window.GraphicsContext,
               line.x1, line.y1, line.x2, line.y2
               );
 
@@ -64,7 +64,7 @@ PlatformDrawClock(platform_window* Window, int Width, int Height)
     {
         int NumberTheta = i * 360 / ArrayCount(ClockNumbers) - thetaOffset;
 
-        XDrawString(Window->Display, Window->Handle, Window->GraphicsContext,
+        XDrawString(Window.Display, Window.Handle, Window.GraphicsContext,
                     Width / 2 + radius * cos(PI * NumberTheta / 180),
                     Height / 2 + radius * sin(PI * NumberTheta / 180),
                     ClockNumbers[i], strlen(ClockNumbers[i]));
@@ -72,7 +72,7 @@ PlatformDrawClock(platform_window* Window, int Width, int Height)
 }
 
 void
-PlatformDrawCalendarHeader(platform_window* Window, int Width, int Height)
+PlatformDrawCalendarHeader(platform_window Window, int Width, int Height)
 {
     local_persist const char* WeekDays[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
 
@@ -83,14 +83,14 @@ PlatformDrawCalendarHeader(platform_window* Window, int Width, int Height)
     for( int i = 0; i < ArrayCount(WeekDays); i++ )
     {
         u32 x = i * CellWidth + CellWidth / 2;
-        XDrawString(Window->Display, Window->Handle, Window->GraphicsContext,
+        XDrawString(Window.Display, Window.Handle, Window.GraphicsContext,
                     x, y,
                     WeekDays[i], strlen(WeekDays[i]));
     }
 }
 
 void
-PlatformDrawCalendar(platform_window* Window, u32 WindowWidth, u32 WindowHeight, calendar_year_node* CalendarYear)
+PlatformDrawCalendar(platform_window Window, u32 WindowWidth, u32 WindowHeight, calendar_year_node* CalendarYear)
 {
     month Month = CalendarYear->Months[CalendarYear->CurrentMonth];
     week_day StartingWeekDay = SUNDAY;
@@ -104,7 +104,7 @@ PlatformDrawCalendar(platform_window* Window, u32 WindowWidth, u32 WindowHeight,
     for( u32 i = 0; i <= NumberOfRows; i++ )
     {
         u32 GridLine = i * WindowHeight / NumberOfRows;
-        XDrawLine(Window->Display, Window->Handle, Window->GraphicsContext,
+        XDrawLine(Window.Display, Window.Handle, Window.GraphicsContext,
                   0, GridLine,
                   WindowWidth, GridLine
                   );
@@ -113,7 +113,7 @@ PlatformDrawCalendar(platform_window* Window, u32 WindowWidth, u32 WindowHeight,
     for( u32 i = 0; i <= NumberOfColumns; i++ )
     {
         u32 GridLine = i * WindowWidth / NumberOfColumns;
-        XDrawLine(Window->Display, Window->Handle, Window->GraphicsContext,
+        XDrawLine(Window.Display, Window.Handle, Window.GraphicsContext,
                   GridLine, 0,
                   GridLine, WindowHeight
                   );
@@ -151,11 +151,18 @@ PlatformDrawGrid(platform_window* Window, u32 OffsetX, u32 OffsetY, u32 Width, u
 
 }
 
-b32 
-PlatformDrawWindow(platform_window* Window, calendar_year_node* CalendarYear)
+platform_event
+PlatformGetNextEvent(platform_window Window)
 {
-    XEvent Event;    
-    XNextEvent(Window->Display, &Event);
+    platform_event Result = {};
+    XNextEvent(Window.Display, &Result.Event);
+    return Result;
+}
+
+void
+PlatformHandleEvent(platform_window Window, platform_event _Event)
+{
+    XEvent Event = _Event.Event;
     switch(Event.type)
     {
         case MapNotify:
@@ -171,34 +178,34 @@ PlatformDrawWindow(platform_window* Window, calendar_year_node* CalendarYear)
                 break;
             }
                                 
-            XFlush(Window->Display);
+            XFlush(Window.Display);
         } break;
              
         case KeyPress:
         {
             if( Event.xkey.keycode == 24 || Event.xkey.keycode == 9 )
             {
-                return false;
+                GlobalIsRunning = false;
             }
 
             XGCValues Values;
-            XGetGCValues(Window->Display, Window->GraphicsContext, GCForeground, &Values);
-            if( Values.foreground == WhitePixel(Window->Display, Window->Screen) )
+            XGetGCValues(Window.Display, Window.GraphicsContext, GCForeground, &Values);
+            if( Values.foreground == WhitePixel(Window.Display, Window.Screen) )
             {
-                XSetForeground(Window->Display, Window->GraphicsContext, BlackPixel(Window->Display, Window->Screen));
+                XSetForeground(Window.Display, Window.GraphicsContext, BlackPixel(Window.Display, Window.Screen));
             }
             else
             {
-                XSetForeground(Window->Display, Window->GraphicsContext, BlackPixel(Window->Display, Window->Screen));
+                XSetForeground(Window.Display, Window.GraphicsContext, BlackPixel(Window.Display, Window.Screen));
             }
 
-            XClearWindow(Window->Display, Window->Handle);
+            XClearWindow(Window.Display, Window.Handle);
 
-            PlatformDrawClock(Window, Window->Width, Window->Height);
-            PlatformDrawCalendarHeader(Window, Window->Width, Window->Height * 0.2);
-            PlatformDrawCalendar(Window, Window->Width, Window->Height * 0.8, CalendarYear);
+            PlatformDrawClock(Window, Window.Width, Window.Height);
+            PlatformDrawCalendarHeader(Window, Window.Width, Window.Height * 0.2);
+            //PlatformDrawCalendar(Window, Window.Width, Window.Height * 0.8, CalendarYear);
 
-            XFlush(Window->Display);
+            XFlush(Window.Display);
         } break;
             
         case ClientMessage:
@@ -211,13 +218,13 @@ PlatformDrawWindow(platform_window* Window, calendar_year_node* CalendarYear)
 
         } break;
     }
-    return true;
 }
 
 platform_window
 PlatformOpenWindow()
 {
-    platform_window Result = {}
+    platform_window Result = {};
+    platform_window Window = Result;
     
     Window.Display = XOpenDisplay(NULL);
     Assert(Window.Display != NULL);
@@ -259,42 +266,41 @@ PlatformOpenWindow()
                                          100, 100,
                                          Window.Width, Window.Height,
                                          1, BlackColor, WhiteColor);
-    Assert(Window.Handle != 0);    
-    return Window;
+    Assert(Window.Handle != 0);
+    
+    return Result;
 }
 
 void
-PlatformCloseWindow(platform_window* Window)
+PlatformCloseWindow(platform_window Window)
 {
-    XDestroyWindow(Window->Display, Window->Handle);
-    XCloseDisplay(Window->Display);
+    XDestroyWindow(Window.Display, Window.Handle);
+    XCloseDisplay(Window.Display);
 }
 
 int main(int argc, char *argv[])
 {
-    platform_window* Window = PlatformOpenWindow();
+    platform_window Window = PlatformOpenWindow();
 
-    XSelectInput(Window->Display, Window->Handle, ExposureMask | KeyPressMask );
-    XMapWindow(Window->Display, Window->Handle);
+    XSelectInput(Window.Display, Window.Handle, ExposureMask | KeyPressMask );
+    XMapWindow(Window.Display, Window.Handle);
 
 
-    Window->GraphicsContext = XCreateGC(Window->Display, Window->Handle, 0, NULL);
+    Window.GraphicsContext = XCreateGC(Window.Display, Window.Handle, 0, NULL);
 
-    XSetForeground(Window->Display, Window->GraphicsContext,
-                   BlackPixel(Window->Display, Window->Screen));
-    XSetBackground(Window->Display, Window->GraphicsContext, WhitePixel(Window->Display, Window->Screen));
+    XSetForeground(Window.Display, Window.GraphicsContext,
+                   BlackPixel(Window.Display, Window.Screen));
+    XSetBackground(Window.Display, Window.GraphicsContext, WhitePixel(Window.Display, Window.Screen));
 
     char *FontName = (char *) "-*-helvetica-*-r-*-*-50-*-*-*-*-*-*-*";
-    XFontStruct *FontInfo = XLoadQueryFont(Window->Display, FontName);
+    XFontStruct *FontInfo = XLoadQueryFont(Window.Display, FontName);
 
     Assert(FontInfo != NULL);
 
-    XSetFont(Window->Display, Window->GraphicsContext, FontInfo->fid);
+    XSetFont(Window.Display, Window.GraphicsContext, FontInfo->fid);
 
     //Game logic
-    GameMain(argc, argv, Window);        
-
-    PlatformCloseWindow(Window);
+    //GameMain(argc, argv, Window);
 }
 
 #endif

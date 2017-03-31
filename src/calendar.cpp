@@ -206,7 +206,7 @@ PrintCalendar(calendar_year_node* CalendarYear)
 }
 
 
-int GameMain(int argc, char *argv[], platform_window* Window)
+int GameMain(int argc, char *argv[], platform_window Window)
 {
     calendar_year_node InitialCalendarYear = {2016, {
         {JANUARY,   "January",   31},
@@ -267,15 +267,16 @@ int GameMain(int argc, char *argv[], platform_window* Window)
 
 	}
     }
-    
-    if( Window )
+
+
+    GlobalIsRunning = true;
+
+    while(GlobalIsRunning)
     {
-        GlobalIsRunning = true;
-        while(GlobalIsRunning)
-        {
-            platform_event* Event = PlatformGetNextEvent(Window);
-        }
+        platform_event Event = PlatformGetNextEvent(Window);
+        PlatformHandleEvent(Window, Event);
     }
+    
     
     free(NextCalendarYear);
     free(Schedule->Entries);
