@@ -223,8 +223,7 @@ PlatformHandleEvent(platform_window Window, platform_event _Event)
 platform_window
 PlatformOpenWindow()
 {
-    platform_window Result = {};
-    platform_window Window = Result;
+    platform_window Window = {};
     
     Window.Display = XOpenDisplay(NULL);
     Assert(Window.Display != NULL);
@@ -243,7 +242,7 @@ PlatformOpenWindow()
     int AspectRatioHeight = DisplayHeight;
     int AspectRatioWidth = (AspectRatioHeight / AspectRatio[1]) * AspectRatio[0];
 
-    printf("Display{%d,%d}, AspectRatio{%d,%d}", DisplayWidth, DisplayHeight, AspectRatioWidth, AspectRatioHeight);
+    printf("Display{%d,%d}, AspectRatio{%d,%d}\n", DisplayWidth, DisplayHeight, AspectRatioWidth, AspectRatioHeight);
     
     Window.Height = AspectRatioHeight;
     if( DisplayWidth < AspectRatioWidth )
@@ -267,21 +266,8 @@ PlatformOpenWindow()
                                          Window.Width, Window.Height,
                                          1, BlackColor, WhiteColor);
     Assert(Window.Handle != 0);
+
     
-    return Result;
-}
-
-void
-PlatformCloseWindow(platform_window Window)
-{
-    XDestroyWindow(Window.Display, Window.Handle);
-    XCloseDisplay(Window.Display);
-}
-
-int main(int argc, char *argv[])
-{
-    platform_window Window = PlatformOpenWindow();
-
     XSelectInput(Window.Display, Window.Handle, ExposureMask | KeyPressMask );
     XMapWindow(Window.Display, Window.Handle);
 
@@ -299,8 +285,23 @@ int main(int argc, char *argv[])
 
     XSetFont(Window.Display, Window.GraphicsContext, FontInfo->fid);
 
+    platform_window Result = Window;
+    return Result;
+}
+
+void
+PlatformCloseWindow(platform_window Window)
+{
+    XDestroyWindow(Window.Display, Window.Handle);
+    XCloseDisplay(Window.Display);
+}
+
+int main(int argc, char *argv[])
+{
+    platform_window Window = PlatformOpenWindow();
+
     //Game logic
-    //GameMain(argc, argv, Window);
+    GameMain(argc, argv, Window);
 }
 
 #endif
