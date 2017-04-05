@@ -109,22 +109,34 @@ typedef struct calendar_year_node
     struct calendar_year_node* NextYear;
 } calendar_year_node;
 
+typedef struct calendar_schedule_entry
+{
+	char Title[256];
+	date_time StartTime;
+	date_time EndTime;
+	u64 Duration;
+} calendar_schedule_entry;
+
+typedef struct calendar_schedule
+{
+	calendar_year_node* InititalCalendarYear;
+	calendar_schedule_entry* Entries;
+	u64 FreeEntryCount;
+	u64 EntryCount;
+	u32 MinimumTimeSlotSize;
+	u32 DefaultTimeSlotSize;
+} calendar_schedule;
+
 struct platform_window;
 struct platform_event;
-
-typedef struct platform_window platform_window;
-typedef struct platform_event platform_event;
+struct platform_event_result;
 
 platform_window PlatformOpenWindow();
-b32 PlatformDrawWindow(platform_window Window, calendar_year_node* CalendarYear);
 void PlatformCloseWindow(platform_window Window);
 void PlatformDrawCalendarHeader(platform_window Window);
 void PlatformDrawClock(platform_window Window, int Width, int Height);
-
-
 platform_event PlatformGetNextEvent(platform_window Window);
-void  PlatformHandleEvent(platform_window Window, platform_event Event);
-
+platform_event_result PlatformHandleEvent(platform_window Window, platform_event Event);
 
 #define CALENDAR_H
 #endif

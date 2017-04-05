@@ -19,6 +19,13 @@ struct platform_event
     XEvent Event;
 };
 
+
+struct platform_event_result
+{
+    
+};
+
+
 #include "calendar.cpp"
 
 void
@@ -159,9 +166,10 @@ PlatformGetNextEvent(platform_window Window)
     return Result;
 }
 
-void
+b32
 PlatformHandleEvent(platform_window Window, platform_event _Event)
 {
+    b32 Result = true;
     XEvent Event = _Event.Event;
     switch(Event.type)
     {
@@ -218,6 +226,8 @@ PlatformHandleEvent(platform_window Window, platform_event _Event)
 
         } break;
     }
+    
+    return Result;
 }
 
 platform_window

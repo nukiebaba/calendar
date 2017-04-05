@@ -5,28 +5,10 @@ global bool GlobalIsRunning;
 
 inline b32 IsLeapYear(int Year)
 {
-    b32 Result = Year % 4 == 0 && (Year % 100 != 0 || Year % 400 == 0);
-  
-    return Result;
+	b32 Result = Year % 4 == 0 && (Year % 100 != 0 || Year % 400 == 0);
+
+	return Result;
 }
-
-typedef struct calendar_schedule_entry
-{
-    char Title[256];
-    date_time StartTime;
-    date_time EndTime;
-    u64 Duration;
-} calendar_schedule_entry;
-
-typedef struct calendar_schedule
-{
-    calendar_year_node* InititalCalendarYear;
-    calendar_schedule_entry* Entries;
-    u64 FreeEntryCount;
-    u64 EntryCount;
-    u32 MinimumTimeSlotSize;
-    u32 DefaultTimeSlotSize;
-} calendar_schedule;
 
 inline int
 Floor(float f)
@@ -241,7 +223,7 @@ int GameMain(int argc, char *argv[], platform_window Window)
     CalendarScheduleInititalize(&InitialCalendarYear, Schedule);
 
     calendar_schedule_entry* Entry = Schedule->Entries;
-    strcpy(Entry->Title, "Example");
+    strcpy_s(Entry->Title, "Example");
     Entry->StartTime.Day = 11;
     Entry->StartTime.Hour = 3;
 
@@ -268,7 +250,6 @@ int GameMain(int argc, char *argv[], platform_window Window)
 	}
     }
 
-
     GlobalIsRunning = true;
 
     while(GlobalIsRunning)
@@ -276,7 +257,6 @@ int GameMain(int argc, char *argv[], platform_window Window)
         platform_event Event = PlatformGetNextEvent(Window);
         PlatformHandleEvent(Window, Event);
     }
-    
     
     free(NextCalendarYear);
     free(Schedule->Entries);

@@ -1,26 +1,31 @@
 #if defined(_WIN32) || defined(_WIN64)
 
-#include "calendar.cpp"
-
 #include <windows.h>
 
 struct platform_window
 {
-    HWND Handle;
-    HDC DeviceContext;
-    WNDCLASS WindowClass;
-    int Width;
-    int Height;
+	HWND Handle;
+	HDC DeviceContext;
+	WNDCLASS WindowClass;
+	int Width;
+	int Height;
 };
 
 struct platform_event
 {
-    MSG Message;
-    UINT MessageId;
-    WPARAM WParam;
-    LPARAM LParam;
-    LRESULT Result;
+	BOOL fromCallback;
+	MSG Message;
+	UINT MessageId;
+	WPARAM WParam;
+	LPARAM LParam;
 };
+
+struct platform_event_result
+{
+	LRESULT MessageResult;
+};
+
+#include "calendar.cpp"
 
 void
 PlatformDrawClock(platform_window* Window)
@@ -46,32 +51,45 @@ DrawGrid(platform_window* Window, u32 OffsetX, u32 OffsetY, u32 Width, u32 Heigh
 
 }
 
-b32
-PlatformDrawWindow(platform_window* Window, calendar_year_node* CalendarYear)
-{
-    return false;
-}
-
-
 void
-PlatformCloseWindow(platform_window* Window)
+PlatformCloseWindow(platform_window Window)
 {
-    if(Window)
+    if(Window.Handle)
     {
-        CloseWindow(Window->Handle);
+        CloseWindow(Window.Handle);
     }
 }
 
-b32
-PlatformDrawWindow(platform_window* Window)
+#define WIN32_MESSAGE_RESULT_ERROR -1
+platform_event PlatformGetNextEvent(platform_window Window)
 {
-    return false;
+    platform_event Result = {};
+    BOOL MessageResult = GetMessage(&Result.Message, 0, 0, 0);
+
+    Assert(MessageResult != WIN32_MESSAGE_RESULT_ERROR);
+    
+    if( MessageResult > 0 )
+    {
+        Result.MessageId = Result.Message.message;
+        TranslateMessage(&Result.Message);
+        DispatchMessage(&Result.Message);
+    }
+    
+    return Result;
 }
 
-void
-PlatformHandleEvent(platform_window Window, platform_event* Event)
+platform_event_result
+PlatformHandleEvent(platform_window Window, platform_event Event)
 {
-    switch(Event->MessageId)
+    platform_event_result Result = {};
+
+    //NOTE: If this is not being called from the Windows callback, ignore it and early-out.
+    if( !Event.fromCallback )
+    {
+        return Result;
+    }
+    
+    switch(Event.MessageId)
     {
         case WM_SIZE:
         {
@@ -109,9 +127,11 @@ PlatformHandleEvent(platform_window Window, platform_event* Event)
 
         default:
         {
-            Event->Result = DefWindowProc(Window.Handle, Event->MessageId, Event->WParam, Event->LParam);
+            Result.MessageResult = DefWindowProc(Window.Handle, Event.MessageId, Event.WParam, Event.LParam);
         } break;
     }
+    
+    return Result;
 }
 
 LRESULT CALLBACK
@@ -124,33 +144,32 @@ MainWindowCallback(HWND WindowHandle,
     Window.Handle = WindowHandle;
     
     platform_event Event = {};
+    Event.fromCallback = true;
     Event.MessageId = MessageId;
     Event.WParam = WParam;
     Event.LParam = LParam;
 
-    PlatformHandleEvent(Window, &Event);
-    
-    return Event.Result;
+    platform_event_result Result = PlatformHandleEvent(Window, Event);
+
+    return Result.MessageResult;
 }
 
 platform_window
 PlatformOpenWindow()
 {
     platform_window Result = {};
-    
-    WNDCLASS WindowClass = Result.WindowClass;
 
-    WindowClass.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
-    WindowClass.lpfnWndProc = MainWindowCallback;
-    WindowClass.hInstance = GetModuleHandle(NULL); // Get the handle of exe
+    Result.WindowClass.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
+    Result.WindowClass.lpfnWndProc = MainWindowCallback;
+    Result.WindowClass.hInstance = GetModuleHandle(NULL); // Get the handle of exe
     //    WindowClass.hIcon;
-    WindowClass.lpszClassName = "CalendarWindowClass";
+    Result.WindowClass.lpszClassName = "CalendarWindowClass";
 
-    if( RegisterClass(&WindowClass) )
+    if( RegisterClass(&Result.WindowClass) )
     {
         Result.Handle =
             CreateWindowEx(0,
-                           WindowClass.lpszClassName,
+                           Result.WindowClass.lpszClassName,
                            "Calendar",
                            WS_OVERLAPPEDWINDOW | WS_VISIBLE,
                            CW_USEDEFAULT, //x
@@ -159,7 +178,7 @@ PlatformOpenWindow()
                            CW_USEDEFAULT, //Height
                            0,
                            0,
-                           WindowClass.hInstance, // Get instance of exe
+                           Result.WindowClass.hInstance, // Get instance of exe
                            0);
     }
     else
@@ -169,25 +188,9 @@ PlatformOpenWindow()
 
     Assert(Result.Handle);
 
-    if(Result.Handle)
+    if(Result.Handle == NULL)
     {
         // @Logging
-        Result = {};
-    }
-    
-    return Result;
-}
-
-platform_event* PlatformGetNextEvent(platform_window* Window)
-{
-    platform_event* Result = {};
-    BOOL MessageResult = GetMessage(&Result->Message, 0, 0, 0);
-
-    if( MessageResult > 0 )
-    {
-        Result->MessageId = Result->Message.message;
-        TranslateMessage(&Result->Message);
-        DispatchMessage(&Result->Message);
     }
     
     return Result;
@@ -200,8 +203,8 @@ WinMain(HINSTANCE Instance,
         int ShowCode)
 {
     platform_window Window = PlatformOpenWindow();
-    
-    GameMain(0, NULL, &Window);
+
+    GameMain(0, NULL, Window);
     
     return 0;
 }

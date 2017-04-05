@@ -1,16 +1,30 @@
-@echo off
+
 
 set platform=x64
 
 set projectDirectory=%~dp0
-set buildToolsPath="C:\Program Files (x86)\Microsoft Visual C++ Build Tools"
 
-call %buildToolsPath%\vcbuildtools.bat %platform%
+set buildToolsPath="C:\Program Files (x86)\Microsoft Visual C++ Build Tools\vcbuildtools.bat"
+REM set buildToolsPath="C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat"
+
+set debugToolsPath="C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\Tools\VsDevCmd.bat"
+
+call %buildToolsPath% %platform%
+call %debugToolsPath%
 
 cd /d %projectDirectory%
 if not exist build\windows (
    mkdir build\windows
 )
+
 pushd build\windows
 cl -Zi /Fecalendar ..\..\src\win32_calendar.cpp user32.lib gdi32.lib
 popd
+
+if 1==0 (
+   call %debugToolsPath%
+   cd /d %projectDirectory%
+   pushd build\windows
+   devenv calendar.exe
+   popd
+)
