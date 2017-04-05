@@ -81,7 +81,7 @@ typedef enum
 } month_name;
 
 //ISO 8601
-struct date_time
+typedef struct date_time
 {
     u16 Year;
     u8 Month;
@@ -91,7 +91,7 @@ struct date_time
     u8 Second;
     u8 offsetHour;
     u8 offsetMinute;
-};
+} date_time;
 
 typedef struct month
 {
