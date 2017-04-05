@@ -89,6 +89,7 @@ typedef struct date_time
     u8 Hour;
     u8 Minute;
     u8 Second;
+    u8 Millisecond;
     u8 offsetHour;
     u8 offsetMinute;
 } date_time;
@@ -130,17 +131,29 @@ typedef struct calendar_schedule
 struct platform_window;
 struct platform_event;
 struct platform_event_result;
+struct platform_timestamp;
 
 typedef struct platform_window platform_window;
 typedef struct platform_event platform_event;
 typedef struct platform_event_result platform_event_result;
+typedef struct platform_timestamp platform_timestamp;
 
-platform_window PlatformOpenWindow();
-void PlatformCloseWindow(platform_window Window);
-void PlatformDrawCalendarHeader(platform_window Window);
-void PlatformDrawClock(platform_window Window, int Width, int Height);
-platform_event PlatformGetNextEvent(platform_window Window);
-platform_event_result PlatformHandleEvent(platform_window Window, platform_event Event);
+platform_window* PlatformOpenWindow();
+void PlatformCloseWindow(platform_window* Window);
+
+platform_event* PlatformAllocateMemoryForEvent();
+void PlatformGetNextEvent(platform_window* Window, platform_event* Event);
+platform_event_result* PlatformHandleEvent(platform_window* Window, platform_event* Event);
+
+
+date_time PlatformGetTime();
+   
+void PlatformDrawLine(platform_window* Window, u32 X1, u32 Y1, u32 X2, u32 Y2);
+void PlatformDrawString(platform_window* Window, u32 PosX, u32 PosY, char* String, u32 StringLength);
+void PlatformDrawCircle(platform_window* Window, int CenterX, int CenterY, int Radius);
+
+void DrawClock(platform_window* Window, u32 WindowWidth, u32 WindowHeight, u32 CenterX, u32 CenterY, u32 Radius);
+
 
 #define CALENDAR_H
 #endif

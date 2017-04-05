@@ -188,7 +188,83 @@ PrintCalendar(calendar_year_node* CalendarYear)
 }
 
 
-int GameMain(int argc, char *argv[], platform_window Window)
+void
+DrawClock(platform_window* Window, u32 WindowWidth, u32 WindowHeight, u32 CenterX, u32 CenterY, u32 Radius)
+{
+    int thetaOffset = 90;
+    date_time Timestamp = PlatformGetTime();
+    int theta = (Timestamp.Second % 60) * 6 - thetaOffset;
+
+
+    PlatformDrawCircle(Window, CenterX, CenterY, Radius);
+
+    u32 LineX1 = CenterX;
+    u32 LineY1 = CenterY;
+    u32 LineX2 = CenterX + Radius * cos(PI * theta / 180);
+    u32 LineY2 = CenterY + Radius * sin(PI * theta / 180);
+    
+    PlatformDrawLine(Window, LineX1, LineY1, LineX2, LineY2);
+
+    local_persist const char* ClockNumbers[] = {"12", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"};
+    
+    for(int i = 0; i < ArrayCount(ClockNumbers); i++)
+    {
+        int NumberTheta = i * 360 / ArrayCount(ClockNumbers) - thetaOffset;
+
+        PlatformDrawString(Window,
+                           CenterX + Radius * cos(PI * NumberTheta / 180),
+                           CenterY + Radius * sin(PI * NumberTheta / 180),
+                           (char *)ClockNumbers[i], strlen(ClockNumbers[i]));
+    }
+}
+
+void
+DrawCalendarHeader(platform_window* Window, int Width, int Height)
+{
+    local_persist const char* WeekDays[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+
+    u32 CellWidth = Width / ArrayCount(WeekDays);
+
+    u32 y = CellWidth / 2;
+    
+    for( int i = 0; i < ArrayCount(WeekDays); i++ )
+    {
+        u32 x = i * CellWidth + CellWidth / 2;
+        PlatformDrawString(Window, x, y, (char *)WeekDays[i], strlen(WeekDays[i]));
+    }
+}
+
+void
+DrawCalendar(platform_window* Window, u32 WindowWidth, u32 WindowHeight, calendar_year_node* CalendarYear)
+{
+    month Month = CalendarYear->Months[CalendarYear->CurrentMonth];
+    int DaysInMonth = Month.Days;
+    
+    u32 NumberOfColumns = 7;
+    u32 NumberOfRows = ceil((float) DaysInMonth / NumberOfColumns);
+
+    Assert(NumberOfRows > 0);
+    
+    for( u32 i = 0; i <= NumberOfRows; i++ )
+    {
+        u32 GridLine = i * WindowHeight / NumberOfRows;
+        PlatformDrawLine(Window,
+                  0, GridLine,
+                  WindowWidth, GridLine
+                  );
+    }
+
+    for( u32 i = 0; i <= NumberOfColumns; i++ )
+    {
+        u32 GridLine = i * WindowWidth / NumberOfColumns;
+        PlatformDrawLine(Window,
+                  GridLine, 0,
+                  GridLine, WindowHeight
+                  );
+    }
+}
+
+int GameMain(int argc, char *argv[], platform_window* Window)
 {
     calendar_year_node InitialCalendarYear = {2016, {
         {JANUARY,   "January",   31},
@@ -252,12 +328,15 @@ int GameMain(int argc, char *argv[], platform_window Window)
 
     GlobalIsRunning = true;
 
+    platform_event* Event = PlatformAllocateMemoryForEvent();
     while(GlobalIsRunning)
     {
-        platform_event Event = PlatformGetNextEvent(Window);
-        PlatformHandleEvent(Window, Event);
+        PlatformGetNextEvent(Window, Event);
+        platform_event_result* Result = PlatformHandleEvent(Window, Event);
+        free(Result);
     }
     
+    free(Event);    
     free(NextCalendarYear);
     free(Schedule->Entries);
     free(Schedule);
