@@ -178,7 +178,7 @@ void RenderWindow(platform_window Window)
     PlatformDrawCalendarHeader(Window, Window.Width, Window.Height * 0.2);
     //PlatformDrawCalendar(Window, Window.Width, Window.Height * 0.8, CalendarYear);
 
-    XFlush(Window.Display);
+
 }
 
 platform_event
@@ -231,35 +231,52 @@ PlatformHandleEvent(platform_window Window, platform_event _Event)
         case MotionNotify:
         {
             XMotionEvent MotionEvent = Event.xmotion;
-            printf("MotionNotify {%d, %d}\n", MotionEvent.x, MotionEvent.y);
+            //printf("MotionNotify {%d, %d}\n", MotionEvent.x, MotionEvent.y);
         } break;
         
-        // @TODO: We need to handle resizing correctly, the X11 window needs to know about
-        // the window being resized
         case ResizeRequest:
         {
             XResizeRequestEvent ResizeRequestEvent = Event.xresizerequest;
 
+#if false
             if (ResizeRequestEvent.width != Window.Width ||
                 ResizeRequestEvent.height != ResizeRequestEvent.height) {
                 Window.Width = ResizeRequestEvent.width;
                 Window.Height = ResizeRequestEvent.height;
+
                 RenderWindow(Window);
             }
+#endif
             
             printf("ResizeRequest {%d, %d}\n", ResizeRequestEvent.width, ResizeRequestEvent.height);
-            RenderWindow(Window);
         } break;
 
         case ConfigureNotify:
         {
-            printf("ConfigureNotify\n");
-        }
+            XConfigureEvent ConfigureEvent = Event.xconfigure;
+
+            if (ConfigureEvent.width != Window.Width ||
+                ConfigureEvent.height != ConfigureEvent.height) {
+                Window.Width = ConfigureEvent.width;
+                Window.Height = ConfigureEvent.height;
+
+                RenderWindow(Window);
+            }
+            
+            printf("%05lu: ConfigureNotify (%d) {Reconfigured Window: %lu, Changed Window: %lu, Width: %d, Height: %d}\n",
+                   Event.xany.serial, Event.type, ConfigureEvent.event,  ConfigureEvent.window,
+                   ConfigureEvent.width, ConfigureEvent.height);
+        } break;
+        
+        case ConfigureRequest:
+        {
+            printf("ConfigureRequest\n");
+        } break;
 
         default:
         {
-            printf("%d\n", Event.type);
-        } break;
+
+        }
     }
     
     return Result;
@@ -314,7 +331,10 @@ PlatformOpenWindow()
 
     
     XSelectInput(Window.Display, Window.Handle,
-                 ExposureMask | KeyPressMask | KeyReleaseMask | PointerMotionMask | ResizeRedirectMask );
+                 ExposureMask | KeyPressMask | KeyReleaseMask | PointerMotionMask
+                 // | ResizeRedirectMask //Called by the parent window
+                 | StructureNotifyMask // Window state changes
+                 );
     XMapWindow(Window.Display, Window.Handle);
 
 
