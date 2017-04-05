@@ -1,4 +1,4 @@
-
+@echo off
 
 set platform=x64
 
