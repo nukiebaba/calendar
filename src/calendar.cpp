@@ -223,7 +223,7 @@ int GameMain(int argc, char *argv[], platform_window Window)
     CalendarScheduleInititalize(&InitialCalendarYear, Schedule);
 
     calendar_schedule_entry* Entry = Schedule->Entries;
-    strcpy_s(Entry->Title, "Example");
+    strcpy(Entry->Title, "Example");
     Entry->StartTime.Day = 11;
     Entry->StartTime.Hour = 3;
 

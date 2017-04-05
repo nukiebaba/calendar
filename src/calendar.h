@@ -131,6 +131,10 @@ struct platform_window;
 struct platform_event;
 struct platform_event_result;
 
+typedef struct platform_window platform_window;
+typedef struct platform_event platform_event;
+typedef struct platform_event_result platform_event_result;
+
 platform_window PlatformOpenWindow();
 void PlatformCloseWindow(platform_window Window);
 void PlatformDrawCalendarHeader(platform_window Window);

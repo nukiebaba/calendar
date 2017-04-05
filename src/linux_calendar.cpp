@@ -22,7 +22,7 @@ struct platform_event
 
 struct platform_event_result
 {
-    
+    XEvent Event;
 };
 
 
@@ -158,6 +158,29 @@ PlatformDrawGrid(platform_window* Window, u32 OffsetX, u32 OffsetY, u32 Width, u
 
 }
 
+void RenderWindow(platform_window Window)
+{
+
+    XGCValues Values;
+    XGetGCValues(Window.Display, Window.GraphicsContext, GCForeground, &Values);
+    if( Values.foreground == WhitePixel(Window.Display, Window.Screen) )
+    {
+        XSetForeground(Window.Display, Window.GraphicsContext, BlackPixel(Window.Display, Window.Screen));
+    }
+    else
+    {
+        XSetForeground(Window.Display, Window.GraphicsContext, BlackPixel(Window.Display, Window.Screen));
+    }
+
+    XClearWindow(Window.Display, Window.Handle);
+
+    PlatformDrawClock(Window, Window.Width, Window.Height);
+    PlatformDrawCalendarHeader(Window, Window.Width, Window.Height * 0.2);
+    //PlatformDrawCalendar(Window, Window.Width, Window.Height * 0.8, CalendarYear);
+
+    XFlush(Window.Display);
+}
+
 platform_event
 PlatformGetNextEvent(platform_window Window)
 {
@@ -166,17 +189,17 @@ PlatformGetNextEvent(platform_window Window)
     return Result;
 }
 
-b32
+platform_event_result
 PlatformHandleEvent(platform_window Window, platform_event _Event)
 {
-    b32 Result = true;
+    platform_event_result Result = {};
     XEvent Event = _Event.Event;
     switch(Event.type)
     {
         case MapNotify:
         {
                 
-            printf("%d", Event.type);
+            printf("MapNotify");
         } break;
             
         case Expose:
@@ -196,34 +219,45 @@ PlatformHandleEvent(platform_window Window, platform_event _Event)
                 GlobalIsRunning = false;
             }
 
-            XGCValues Values;
-            XGetGCValues(Window.Display, Window.GraphicsContext, GCForeground, &Values);
-            if( Values.foreground == WhitePixel(Window.Display, Window.Screen) )
-            {
-                XSetForeground(Window.Display, Window.GraphicsContext, BlackPixel(Window.Display, Window.Screen));
-            }
-            else
-            {
-                XSetForeground(Window.Display, Window.GraphicsContext, BlackPixel(Window.Display, Window.Screen));
-            }
-
-            XClearWindow(Window.Display, Window.Handle);
-
-            PlatformDrawClock(Window, Window.Width, Window.Height);
-            PlatformDrawCalendarHeader(Window, Window.Width, Window.Height * 0.2);
-            //PlatformDrawCalendar(Window, Window.Width, Window.Height * 0.8, CalendarYear);
-
-            XFlush(Window.Display);
+            RenderWindow(Window);
+            printf("KeyPress {%d}\n", Event.xkey.keycode);
         } break;
-            
-        case ClientMessage:
+
+        case KeyRelease:
         {
-                
+            printf("KeyRelease {%d}\n", Event.xkey.keycode);
         } break;
+
+        case MotionNotify:
+        {
+            XMotionEvent MotionEvent = Event.xmotion;
+            printf("MotionNotify {%d, %d}\n", MotionEvent.x, MotionEvent.y);
+        } break;
+        
+        // Window resize event
+        case ResizeRequest:
+        {
+            XResizeRequestEvent ResizeRequestEvent = Event.xresizerequest;
+
+            if (ResizeRequestEvent.width != Window.Width ||
+                ResizeRequestEvent.height != ResizeRequestEvent.height) {
+                Window.Width = ResizeRequestEvent.width;
+                Window.Height = ResizeRequestEvent.height;
+                RenderWindow(Window);
+            }
+            
+            printf("ResizeRequest {%d, %d}\n", ResizeRequestEvent.width, ResizeRequestEvent.height);
+            RenderWindow(Window);
+        } break;
+
+        case ConfigureNotify:
+        {
+            printf("ConfigureNotify\n");
+        }
 
         default:
         {
-
+            printf("%d\n", Event.type);
         } break;
     }
     
@@ -278,7 +312,8 @@ PlatformOpenWindow()
     Assert(Window.Handle != 0);
 
     
-    XSelectInput(Window.Display, Window.Handle, ExposureMask | KeyPressMask );
+    XSelectInput(Window.Display, Window.Handle,
+                 ExposureMask | KeyPressMask | KeyReleaseMask | PointerMotionMask | ResizeRedirectMask );
     XMapWindow(Window.Display, Window.Handle);
 
 
