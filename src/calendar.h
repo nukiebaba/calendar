@@ -131,7 +131,7 @@ struct platform_window;
 struct platform_event;
 struct platform_event_result;
 
-Platform_window PlatformOpenWindow();
+platform_window PlatformOpenWindow();
 void PlatformCloseWindow(platform_window Window);
 void PlatformDrawCalendarHeader(platform_window Window);
 void PlatformDrawClock(platform_window Window, int Width, int Height);

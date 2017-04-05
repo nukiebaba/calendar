@@ -20,11 +20,3 @@ if not exist build\windows (
 pushd build\windows
 cl -Zi /Fecalendar ..\..\src\win32_calendar.cpp user32.lib gdi32.lib
 popd
-
-if 1==0 (
-   call %debugToolsPath%
-   cd /d %projectDirectory%
-   pushd build\windows
-   devenv calendar.exe
-   popd
-)
