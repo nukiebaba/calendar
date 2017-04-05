@@ -234,7 +234,8 @@ PlatformHandleEvent(platform_window Window, platform_event _Event)
             printf("MotionNotify {%d, %d}\n", MotionEvent.x, MotionEvent.y);
         } break;
         
-        // Window resize event
+        // @TODO: We need to handle resizing correctly, the X11 window needs to know about
+        // the window being resized
         case ResizeRequest:
         {
             XResizeRequestEvent ResizeRequestEvent = Event.xresizerequest;
