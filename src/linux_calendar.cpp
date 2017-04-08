@@ -4,8 +4,9 @@
 #include <sys/time.h>
 
 // ICCCM 4.1.2.7. WM_PROTOCOLS Property
-#define WM_TAKE_FOCUS "WM_TAKE_FOCUS"
-#define WM_DELETE_WINDOW "WM_DELETE_WINDOW"
+#define WM_PROTOCOLS 295
+#define WM_TAKE_FOCUS 294
+#define WM_DELETE_WINDOW 293
 
 struct platform_window
 {
@@ -188,7 +189,7 @@ PlatformOpenWindow()
 
     // Window manager sends a ClientMessage to X11 for closing the window
 
-    Atom WindowManagerProtocolDeleteWindow = XInternAtom(Window->Display, WM_DELETE_WINDOW, True);
+    Atom WindowManagerProtocolDeleteWindow = XInternAtom(Window->Display, "WM_DELETE_WINDOW", True);
     Atom WindowManagerProtocols[]          = {WindowManagerProtocolDeleteWindow};
     int ProtocolResult
         = XSetWMProtocols(Window->Display, Window->Handle, WindowManagerProtocols, ArrayCount(WindowManagerProtocols));
@@ -304,12 +305,24 @@ PlatformHandleEvent(platform_window* Window, platform_event* _Event)
         // Window manager will send ClientMessage when client requests window deletion
         case ClientMessage:
         {
+
             XClientMessageEvent ClientMessageEvent = Event.xclient;
 
             char* AtomName = XGetAtomName(Window->Display, ClientMessageEvent.message_type);
-            if(strcmp(AtomName, WM_DELETE_WINDOW))
+
+            printf("ClientMessage {Message Type: %lu, Format: %d, MessageName: %s}\n", ClientMessageEvent.message_type,
+                   ClientMessageEvent.format, AtomName);
+
+            if(ClientMessageEvent.message_type == WM_PROTOCOLS)
             {
-                GlobalIsRunning = false;
+                // Format is 32 bits, hence using data.l
+                Atom Protocol      = ClientMessageEvent.data.l[0];
+                char* ProtocolName = XGetAtomName(Window->Display, Protocol);
+                if(strcmp(ProtocolName, "WM_PROTOCOLS"))
+                {
+                    GlobalIsRunning = false;
+                }
+                printf("ProtocolMessage {Protocl: %lu, ProtocolName: %s}\n", Protocol, ProtocolName);
             }
         }
 
