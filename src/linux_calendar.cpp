@@ -3,11 +3,16 @@
 #include <X11/Xlib.h>
 #include <sys/time.h>
 
+// ICCCM 4.1.2.7. WM_PROTOCOLS Property
+#define WM_TAKE_FOCUS "WM_TAKE_FOCUS"
+#define WM_DELETE_WINDOW "WM_DELETE_WINDOW"
+
 struct platform_window
 {
     Display* Display;
     int Screen;
     Window Handle;
+    Atom* Protocols;
     GC GraphicsContext;
     int Width;
     int Height;
@@ -110,7 +115,7 @@ RenderWindow(platform_window* Window)
 
     XClearWindow(Window->Display, Window->Handle);
 
-    DrawClock(Window, Window->Width, Window->Height, Window->Width / 2, Window->Height / 2, 250);
+    DrawClock(Window, Window->Width / 2, Window->Height / 2, 250);
     DrawCalendarHeader(Window, Window->Width, Window->Height * 0.2);
     // PlatformDrawCalendar(Window, Window->Width, Window->Height * 0.8, CalendarYear);
 }
@@ -137,6 +142,76 @@ void
 PlatformGetNextEvent(platform_window* Window, platform_event* _Event)
 {
     XNextEvent(Window->Display, &_Event->Event);
+}
+
+platform_window*
+PlatformOpenWindow()
+{
+    platform_window* Window = (platform_window*) malloc(sizeof(platform_window));
+
+    Window->Display = XOpenDisplay(NULL);
+    Assert(Window->Display != NULL);
+
+    Window->Screen = DefaultScreen(Window->Display);
+
+    unsigned long BlackColor = BlackPixel(Window->Display, Window->Screen);
+    unsigned long WhiteColor = WhitePixel(Window->Display, Window->Screen);
+
+    int AspectRatio[2] = {16, 9};
+    int DisplayHeight  = DisplayHeight(Window->Display, Window->Screen);
+    int DisplayWidth   = DisplayWidth(Window->Display, Window->Screen);
+
+    int AspectRatioHeight = DisplayHeight;
+    int AspectRatioWidth  = (AspectRatioHeight / AspectRatio[1]) * AspectRatio[0];
+
+    printf("Display{%d,%d}, AspectRatio{%d,%d}\n", DisplayWidth, DisplayHeight, AspectRatioWidth, AspectRatioHeight);
+
+    Window->Height = AspectRatioHeight;
+    if(DisplayWidth < AspectRatioWidth)
+    {
+        Window->Width = DisplayWidth;
+    }
+    else
+    {
+        Window->Width = AspectRatioWidth;
+    }
+
+    Assert(AspectRatioWidth <= DisplayWidth);
+    Assert(AspectRatioHeight == DisplayHeight);
+
+    Window->Width *= 0.8;
+    Window->Height *= 0.8;
+
+    Window->Handle = XCreateSimpleWindow(Window->Display, RootWindow(Window->Display, Window->Screen), 100, 100,
+                                         Window->Width, Window->Height, 1, BlackColor, WhiteColor);
+    Assert(Window->Handle != 0);
+
+    // Window manager sends a ClientMessage to X11 for closing the window
+
+    Atom WindowManagerProtocolDeleteWindow = XInternAtom(Window->Display, WM_DELETE_WINDOW, True);
+    Atom WindowManagerProtocols[]          = {WindowManagerProtocolDeleteWindow};
+    int ProtocolResult
+        = XSetWMProtocols(Window->Display, Window->Handle, WindowManagerProtocols, ArrayCount(WindowManagerProtocols));
+    Assert(ProtocolResult);
+
+    XSelectInput(Window->Display, Window->Handle,
+                 ExposureMask | KeyPressMask | KeyReleaseMask | PointerMotionMask | StructureNotifyMask);
+    XMapWindow(Window->Display, Window->Handle);
+
+    Window->GraphicsContext = XCreateGC(Window->Display, Window->Handle, 0, NULL);
+
+    XSetForeground(Window->Display, Window->GraphicsContext, BlackPixel(Window->Display, Window->Screen));
+    XSetBackground(Window->Display, Window->GraphicsContext, WhitePixel(Window->Display, Window->Screen));
+
+    char* FontName        = (char*) "-*-helvetica-*-r-*-*-50-*-*-*-*-*-*-*";
+    XFontStruct* FontInfo = XLoadQueryFont(Window->Display, FontName);
+
+    Assert(FontInfo != NULL);
+
+    XSetFont(Window->Display, Window->GraphicsContext, FontInfo->fid);
+
+    platform_window* Result = Window;
+    return Result;
 }
 
 platform_event_result*
@@ -226,6 +301,18 @@ PlatformHandleEvent(platform_window* Window, platform_event* _Event)
         }
         break;
 
+        // Window manager will send ClientMessage when client requests window deletion
+        case ClientMessage:
+        {
+            XClientMessageEvent ClientMessageEvent = Event.xclient;
+
+            char* AtomName = XGetAtomName(Window->Display, ClientMessageEvent.message_type);
+            if(strcmp(AtomName, WM_DELETE_WINDOW))
+            {
+                GlobalIsRunning = false;
+            }
+        }
+
         default:
         {
             XAnyEvent AnyEvent = Event.xany;
@@ -234,68 +321,6 @@ PlatformHandleEvent(platform_window* Window, platform_event* _Event)
     }
 
     return NULL;
-}
-
-platform_window*
-PlatformOpenWindow()
-{
-    platform_window* Window = (platform_window*) malloc(sizeof(platform_window));
-
-    Window->Display = XOpenDisplay(NULL);
-    Assert(Window->Display != NULL);
-
-    Window->Screen = DefaultScreen(Window->Display);
-
-    unsigned long BlackColor = BlackPixel(Window->Display, Window->Screen);
-    unsigned long WhiteColor = WhitePixel(Window->Display, Window->Screen);
-
-    int AspectRatio[2] = {16, 9};
-    int DisplayHeight  = DisplayHeight(Window->Display, Window->Screen);
-    int DisplayWidth   = DisplayWidth(Window->Display, Window->Screen);
-
-    int AspectRatioHeight = DisplayHeight;
-    int AspectRatioWidth  = (AspectRatioHeight / AspectRatio[1]) * AspectRatio[0];
-
-    printf("Display{%d,%d}, AspectRatio{%d,%d}\n", DisplayWidth, DisplayHeight, AspectRatioWidth, AspectRatioHeight);
-
-    Window->Height = AspectRatioHeight;
-    if(DisplayWidth < AspectRatioWidth)
-    {
-        Window->Width = DisplayWidth;
-    }
-    else
-    {
-        Window->Width = AspectRatioWidth;
-    }
-
-    Assert(AspectRatioWidth <= DisplayWidth);
-    Assert(AspectRatioHeight == DisplayHeight);
-
-    Window->Width *= 0.8;
-    Window->Height *= 0.8;
-
-    Window->Handle = XCreateSimpleWindow(Window->Display, RootWindow(Window->Display, Window->Screen), 100, 100,
-                                         Window->Width, Window->Height, 1, BlackColor, WhiteColor);
-    Assert(Window->Handle != 0);
-
-    XSelectInput(Window->Display, Window->Handle,
-                 ExposureMask | KeyPressMask | KeyReleaseMask | PointerMotionMask | StructureNotifyMask);
-    XMapWindow(Window->Display, Window->Handle);
-
-    Window->GraphicsContext = XCreateGC(Window->Display, Window->Handle, 0, NULL);
-
-    XSetForeground(Window->Display, Window->GraphicsContext, BlackPixel(Window->Display, Window->Screen));
-    XSetBackground(Window->Display, Window->GraphicsContext, WhitePixel(Window->Display, Window->Screen));
-
-    char* FontName        = (char*) "-*-helvetica-*-r-*-*-50-*-*-*-*-*-*-*";
-    XFontStruct* FontInfo = XLoadQueryFont(Window->Display, FontName);
-
-    Assert(FontInfo != NULL);
-
-    XSetFont(Window->Display, Window->GraphicsContext, FontInfo->fid);
-
-    platform_window* Result = Window;
-    return Result;
 }
 
 void

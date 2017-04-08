@@ -17,3 +17,6 @@ src/*
 !src/*.c
 !src/*.cpp
 !src/*.h
+
+#Ignore .ctm
+*.ctm
