@@ -1,16 +1,16 @@
 #if !defined(CALENDAR_H)
 
+#include <math.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdint.h>
-#include <math.h>
 
 #if COMPILER_LLVM
 #include <x86intrin.h>
 #endif
 
-#define ArrayCount(x) (int)((sizeof(x)/sizeof(0[x])) / ((size_t)(!(sizeof(x) % sizeof(0[x])))))
+#define ArrayCount(x) (int) ((sizeof(x) / sizeof(0 [x])) / ((size_t)(!(sizeof(x) % sizeof(0 [x])))))
 
 #define internal static
 #define local_persist static
@@ -19,17 +19,16 @@
 #define PI 3.14159265f
 
 #ifdef NDEBUG
-#define Assert(Expression) ((void)0)
+#define Assert(Expression) ((void) 0)
 #else
-#define Assert(Expression)                                              \
-{                                                                       \
-    if( !(Expression) )                                                 \
-    {                                                                   \
-        fprintf(stderr, "%s:%s:%d: Assertion failed for (%s)\n",        \
-                __FILE__, __func__, __LINE__, #Expression);             \
-        exit(EXIT_FAILURE);                                             \
-    }                                                                   \
-}                                                                       
+#define Assert(Expression)                                                                                             \
+    {                                                                                                                  \
+        if(!(Expression))                                                                                              \
+        {                                                                                                              \
+            fprintf(stderr, "%s:%s:%d: Assertion failed for (%s)\n", __FILE__, __func__, __LINE__, #Expression);       \
+            exit(EXIT_FAILURE);                                                                                        \
+        }                                                                                                              \
+    }
 #endif
 
 typedef int8_t i8;
@@ -52,19 +51,9 @@ typedef real64 f64;
 
 typedef int b32;
 
-typedef enum
-{
-    MONDAY,
-    TUESDAY,
-    WEDNESDAY,
-    THURSDAY,
-    FRIDAY,
-    SATURDAY,
-    SUNDAY
-} week_day;
+typedef enum { MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY } week_day;
 
-typedef enum
-{
+typedef enum {
     NONE,
     JANUARY,
     FEBRUARY,
@@ -80,7 +69,7 @@ typedef enum
     DECEMBER
 } month_name;
 
-//ISO 8601
+// ISO 8601
 typedef struct date_time
 {
     u16 Year;
@@ -112,20 +101,20 @@ typedef struct calendar_year_node
 
 typedef struct calendar_schedule_entry
 {
-	char Title[256];
-	date_time StartTime;
-	date_time EndTime;
-	u64 Duration;
+    char Title[256];
+    date_time StartTime;
+    date_time EndTime;
+    u64 Duration;
 } calendar_schedule_entry;
 
 typedef struct calendar_schedule
 {
-	calendar_year_node* InititalCalendarYear;
-	calendar_schedule_entry* Entries;
-	u64 FreeEntryCount;
-	u64 EntryCount;
-	u32 MinimumTimeSlotSize;
-	u32 DefaultTimeSlotSize;
+    calendar_year_node* InititalCalendarYear;
+    calendar_schedule_entry* Entries;
+    u64 FreeEntryCount;
+    u64 EntryCount;
+    u32 MinimumTimeSlotSize;
+    u32 DefaultTimeSlotSize;
 } calendar_schedule;
 
 struct platform_window;
@@ -138,22 +127,30 @@ typedef struct platform_event platform_event;
 typedef struct platform_event_result platform_event_result;
 typedef struct platform_timestamp platform_timestamp;
 
-platform_window* PlatformOpenWindow();
-void PlatformCloseWindow(platform_window* Window);
+platform_window*
+PlatformOpenWindow();
+void
+PlatformCloseWindow(platform_window* Window);
 
-platform_event* PlatformAllocateMemoryForEvent();
-void PlatformGetNextEvent(platform_window* Window, platform_event* Event);
-platform_event_result* PlatformHandleEvent(platform_window* Window, platform_event* Event);
+platform_event*
+PlatformAllocateMemoryForEvent();
+void
+PlatformGetNextEvent(platform_window* Window, platform_event* Event);
+platform_event_result*
+PlatformHandleEvent(platform_window* Window, platform_event* Event);
 
+date_time
+PlatformGetTime();
 
-date_time PlatformGetTime();
-   
-void PlatformDrawLine(platform_window* Window, u32 X1, u32 Y1, u32 X2, u32 Y2);
-void PlatformDrawString(platform_window* Window, u32 PosX, u32 PosY, char* String, u32 StringLength);
-void PlatformDrawCircle(platform_window* Window, int CenterX, int CenterY, int Radius);
+void
+PlatformDrawLine(platform_window* Window, u32 X1, u32 Y1, u32 X2, u32 Y2);
+void
+PlatformDrawString(platform_window* Window, u32 PosX, u32 PosY, char* String, u32 StringLength);
+void
+PlatformDrawCircle(platform_window* Window, int CenterX, int CenterY, int Radius);
 
-void DrawClock(platform_window* Window, u32 WindowWidth, u32 WindowHeight, u32 CenterX, u32 CenterY, u32 Radius);
-
+void
+DrawClock(platform_window* Window, u32 WindowWidth, u32 WindowHeight, u32 CenterX, u32 CenterY, u32 Radius);
 
 #define CALENDAR_H
 #endif

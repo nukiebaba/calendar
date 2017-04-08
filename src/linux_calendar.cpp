@@ -31,75 +31,75 @@ struct platform_event_result
 
 #include "calendar.cpp"
 
-int main(int argc, char *argv[])
+int
+main(int argc, char* argv[])
 {
     platform_window* Window = PlatformOpenWindow();
 
-    //Game logic
+    // Game logic
     GameMain(argc, argv, Window);
 }
 
-platform_event* PlatformAllocateMemoryForEvent()
+platform_event*
+PlatformAllocateMemoryForEvent()
 {
     platform_event* Result = (platform_event*) malloc(sizeof(platform_event));
 
     return Result;
 }
 
-date_time PlatformGetTime()
+date_time
+PlatformGetTime()
 {
     date_time Timestamp = {};
-    
+
     timeval TimeValue;
     gettimeofday(&TimeValue, NULL);
 
-    Timestamp.Second = TimeValue.tv_sec;
+    Timestamp.Second      = TimeValue.tv_sec;
     Timestamp.Millisecond = TimeValue.tv_usec / 1000;
-    
+
     return Timestamp;
 }
 
-void PlatformDrawLine(platform_window* Window, u32 X1, u32  Y1, u32  X2, u32 Y2)
+void
+PlatformDrawLine(platform_window* Window, u32 X1, u32 Y1, u32 X2, u32 Y2)
 {
 
-        XDrawLine(Window->Display, Window->Handle, Window->GraphicsContext,
-                  X1, Y1, X2, Y2);
+    XDrawLine(Window->Display, Window->Handle, Window->GraphicsContext, X1, Y1, X2, Y2);
 }
 
-void 
+void
 PlatformDrawGrid(platform_window* Window, u32 OffsetX, u32 OffsetY, u32 Width, u32 Height, u32 Rows, u32 Columns)
 {
     Assert(Rows > 0);
     Assert(Columns > 0);
-    
-    f32 CellWidth = Width / (f32)Columns;
-    f32 CellHeight = Height / (f32)Rows;    
 
-    for( u32 i = 0; i <= Columns; i++ )
+    f32 CellWidth  = Width / (f32) Columns;
+    f32 CellHeight = Height / (f32) Rows;
+
+    for(u32 i = 0; i <= Columns; i++)
     {
         f32 ColumnOffset = i * CellWidth;
-        XDrawLine(Window->Display, Window->Handle, Window->GraphicsContext,
-                  ColumnOffset + OffsetX, OffsetY,
-                  ColumnOffset + OffsetX, Height + OffsetY
-                  );
+        XDrawLine(Window->Display, Window->Handle, Window->GraphicsContext, ColumnOffset + OffsetX, OffsetY,
+                  ColumnOffset + OffsetX, Height + OffsetY);
     }
-    
-    for( u32 i = 0; i <= Rows; i++ )
+
+    for(u32 i = 0; i <= Rows; i++)
     {
         f32 RowOffset = i * CellHeight;
-        
-        PlatformDrawLine(Window, OffsetX, RowOffset + OffsetY,
-                                 Width + OffsetX, RowOffset + OffsetY);
-    }
 
+        PlatformDrawLine(Window, OffsetX, RowOffset + OffsetY, Width + OffsetX, RowOffset + OffsetY);
+    }
 }
 
-void RenderWindow(platform_window* Window)
+void
+RenderWindow(platform_window* Window)
 {
 
     XGCValues Values;
     XGetGCValues(Window->Display, Window->GraphicsContext, GCForeground, &Values);
-    if( Values.foreground == WhitePixel(Window->Display, Window->Screen) )
+    if(Values.foreground == WhitePixel(Window->Display, Window->Screen))
     {
         XSetForeground(Window->Display, Window->GraphicsContext, BlackPixel(Window->Display, Window->Screen));
     }
@@ -112,34 +112,25 @@ void RenderWindow(platform_window* Window)
 
     DrawClock(Window, Window->Width, Window->Height, Window->Width / 2, Window->Height / 2, 250);
     DrawCalendarHeader(Window, Window->Width, Window->Height * 0.2);
-    //PlatformDrawCalendar(Window, Window->Width, Window->Height * 0.8, CalendarYear);
-
-
+    // PlatformDrawCalendar(Window, Window->Width, Window->Height * 0.8, CalendarYear);
 }
 
-void PlatformDrawString(platform_window* Window, u32 PosX, u32 PosY, char* String, u32 StringLength)
+void
+PlatformDrawString(platform_window* Window, u32 PosX, u32 PosY, char* String, u32 StringLength)
 {
-    XDrawString(Window->Display, Window->Handle, Window->GraphicsContext,
-                PosX, PosY,
-                String, StringLength);
+    XDrawString(Window->Display, Window->Handle, Window->GraphicsContext, PosX, PosY, String, StringLength);
 }
-
 
 void
 PlatformDrawCircle(platform_window* Window, int CenterX, int CenterY, int Radius)
 {
-    XPoint c = {CenterX, CenterY};
+    XPoint c   = {CenterX, CenterY};
     int length = 2 * Radius;
 
-    XArc arc = {c.x - Radius, c.y - Radius,
-                length, length,
-                0 * 64, 360 * 64};
+    XArc arc = {c.x - Radius, c.y - Radius, length, length, 0 * 64, 360 * 64};
 
-    XDrawArc(Window->Display, Window->Handle, Window->GraphicsContext,
-             arc.x, arc.y,
-             arc.width, arc.height,
-             arc.angle1, arc.angle2
-             );
+    XDrawArc(Window->Display, Window->Handle, Window->GraphicsContext, arc.x, arc.y, arc.width, arc.height, arc.angle1,
+             arc.angle2);
 }
 
 void
@@ -152,47 +143,52 @@ platform_event_result*
 PlatformHandleEvent(platform_window* Window, platform_event* _Event)
 {
     XEvent Event = _Event->Event;
-    
+
     switch(Event.type)
     {
         case MapNotify:
         {
-                
+
             printf("MapNotify");
-        } break;
-            
+        }
+        break;
+
         case Expose:
         {
-            if( Event.xexpose.count > 0 )
+            if(Event.xexpose.count > 0)
             {
                 break;
             }
-                                
+
             XFlush(Window->Display);
-        } break;
-             
+        }
+        break;
+
         case KeyPress:
         {
-            if( Event.xkey.keycode == 24 || Event.xkey.keycode == 9 )
+            if(Event.xkey.keycode == 24 || Event.xkey.keycode == 9)
             {
                 GlobalIsRunning = false;
             }
 
             RenderWindow(Window);
             printf("KeyPress {%d}\n", Event.xkey.keycode);
-        } break;
+        }
+        break;
 
         case KeyRelease:
         {
             printf("KeyRelease {%d}\n", Event.xkey.keycode);
-        } break;
+        }
+        break;
 
         case MotionNotify:
         {
             XMotionEvent MotionEvent = Event.xmotion;
             printf("MotionNotify {%d, %d}\n", MotionEvent.x, MotionEvent.y);
-        } break;
-        
+        }
+        break;
+
         case ResizeRequest:
         {
             XResizeRequestEvent ResizeRequestEvent = Event.xresizerequest;
@@ -206,32 +202,35 @@ PlatformHandleEvent(platform_window* Window, platform_event* _Event)
                 RenderWindow(Window);
             }
 #endif
-            
+
             printf("ResizeRequest {%d, %d}\n", ResizeRequestEvent.width, ResizeRequestEvent.height);
-        } break;
+        }
+        break;
 
         case ConfigureNotify:
         {
             XConfigureEvent ConfigureEvent = Event.xconfigure;
 
-            if (ConfigureEvent.width != Window->Width ||
-                ConfigureEvent.height != ConfigureEvent.height) {
-                Window->Width = ConfigureEvent.width;
+            if(ConfigureEvent.width != Window->Width || ConfigureEvent.height != ConfigureEvent.height)
+            {
+                Window->Width  = ConfigureEvent.width;
                 Window->Height = ConfigureEvent.height;
 
                 RenderWindow(Window);
             }
-            
-            printf("%05lu: ConfigureNotify (%d) {Reconfigured Window: %lu, Changed Window: %lu, Width: %d, Height: %d}\n",
-                   Event.xany.serial, Event.type, ConfigureEvent.event,  ConfigureEvent.window,
-                   ConfigureEvent.width, ConfigureEvent.height);
-        } break;
+
+            printf(
+                "%05lu: ConfigureNotify (%d) {Reconfigured Window: %lu, Changed Window: %lu, Width: %d, Height: %d}\n",
+                Event.xany.serial, Event.type, ConfigureEvent.event, ConfigureEvent.window, ConfigureEvent.width,
+                ConfigureEvent.height);
+        }
+        break;
 
         default:
         {
             XAnyEvent AnyEvent = Event.xany;
-
-        } break;
+        }
+        break;
     }
 
     return NULL;
@@ -240,29 +239,27 @@ PlatformHandleEvent(platform_window* Window, platform_event* _Event)
 platform_window*
 PlatformOpenWindow()
 {
-    platform_window* Window = (platform_window*) malloc( sizeof(platform_window) );
-    
+    platform_window* Window = (platform_window*) malloc(sizeof(platform_window));
+
     Window->Display = XOpenDisplay(NULL);
     Assert(Window->Display != NULL);
-    
+
     Window->Screen = DefaultScreen(Window->Display);
 
-    
     unsigned long BlackColor = BlackPixel(Window->Display, Window->Screen);
     unsigned long WhiteColor = WhitePixel(Window->Display, Window->Screen);
 
-    
     int AspectRatio[2] = {16, 9};
-    int DisplayHeight = DisplayHeight(Window->Display, Window->Screen);
-    int DisplayWidth = DisplayWidth(Window->Display, Window->Screen);
+    int DisplayHeight  = DisplayHeight(Window->Display, Window->Screen);
+    int DisplayWidth   = DisplayWidth(Window->Display, Window->Screen);
 
     int AspectRatioHeight = DisplayHeight;
-    int AspectRatioWidth = (AspectRatioHeight / AspectRatio[1]) * AspectRatio[0];
+    int AspectRatioWidth  = (AspectRatioHeight / AspectRatio[1]) * AspectRatio[0];
 
     printf("Display{%d,%d}, AspectRatio{%d,%d}\n", DisplayWidth, DisplayHeight, AspectRatioWidth, AspectRatioHeight);
-    
+
     Window->Height = AspectRatioHeight;
-    if( DisplayWidth < AspectRatioWidth )
+    if(DisplayWidth < AspectRatioWidth)
     {
         Window->Width = DisplayWidth;
     }
@@ -272,32 +269,26 @@ PlatformOpenWindow()
     }
 
     Assert(AspectRatioWidth <= DisplayWidth);
-    Assert(AspectRatioHeight == DisplayHeight);    
+    Assert(AspectRatioHeight == DisplayHeight);
 
     Window->Width *= 0.8;
     Window->Height *= 0.8;
-    
-    Window->Handle = XCreateSimpleWindow(Window->Display,
-                                         RootWindow(Window->Display, Window->Screen),
-                                         100, 100,
-                                         Window->Width, Window->Height,
-                                         1, BlackColor, WhiteColor);
+
+    Window->Handle = XCreateSimpleWindow(Window->Display, RootWindow(Window->Display, Window->Screen), 100, 100,
+                                         Window->Width, Window->Height, 1, BlackColor, WhiteColor);
     Assert(Window->Handle != 0);
-    
+
     XSelectInput(Window->Display, Window->Handle,
-                 ExposureMask | KeyPressMask | KeyReleaseMask | PointerMotionMask
-                 | StructureNotifyMask
-                 );
+                 ExposureMask | KeyPressMask | KeyReleaseMask | PointerMotionMask | StructureNotifyMask);
     XMapWindow(Window->Display, Window->Handle);
 
     Window->GraphicsContext = XCreateGC(Window->Display, Window->Handle, 0, NULL);
 
-    XSetForeground(Window->Display, Window->GraphicsContext,
-                   BlackPixel(Window->Display, Window->Screen));
+    XSetForeground(Window->Display, Window->GraphicsContext, BlackPixel(Window->Display, Window->Screen));
     XSetBackground(Window->Display, Window->GraphicsContext, WhitePixel(Window->Display, Window->Screen));
 
-    char *FontName = (char *) "-*-helvetica-*-r-*-*-50-*-*-*-*-*-*-*";
-    XFontStruct *FontInfo = XLoadQueryFont(Window->Display, FontName);
+    char* FontName        = (char*) "-*-helvetica-*-r-*-*-50-*-*-*-*-*-*-*";
+    XFontStruct* FontInfo = XLoadQueryFont(Window->Display, FontName);
 
     Assert(FontInfo != NULL);
 
