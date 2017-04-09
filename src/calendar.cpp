@@ -252,6 +252,28 @@ DrawCalendar(platform_window* Window, u32 WindowWidth, u32 WindowHeight, calenda
     }
 }
 
+void
+DrawGrid(platform_window* Window, u32 OffsetX, u32 OffsetY, u32 Width, u32 Height, u32 Rows, u32 Columns)
+{
+    Assert(Rows > 0);
+    Assert(Columns > 0);
+
+    f32 CellWidth  = Width / (f32) Columns;
+    f32 CellHeight = Height / (f32) Rows;
+
+    for(u32 i = 0; i <= Columns; i++)
+    {
+        f32 ColumnOffset = i * CellWidth;
+        PlatformDrawLine(Window, ColumnOffset + OffsetX, OffsetY, ColumnOffset + OffsetX, Height + OffsetY);
+    }
+
+    for(u32 i = 0; i <= Rows; i++)
+    {
+        f32 RowOffset = i * CellHeight;
+        PlatformDrawLine(Window, OffsetX, RowOffset + OffsetY, Width + OffsetX, RowOffset + OffsetY);
+    }
+}
+
 int
 GameMain(int argc, char* argv[], platform_window* Window)
 {

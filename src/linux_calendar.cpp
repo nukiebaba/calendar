@@ -3,17 +3,11 @@
 #include <X11/Xlib.h>
 #include <sys/time.h>
 
-// ICCCM 4.1.2.7. WM_PROTOCOLS Property
-#define WM_PROTOCOLS 295
-#define WM_TAKE_FOCUS 294
-#define WM_DELETE_WINDOW 293
-
 struct platform_window
 {
     Display* Display;
     int Screen;
     Window Handle;
-    Atom* Protocols;
     GC GraphicsContext;
     int Width;
     int Height;
@@ -24,18 +18,29 @@ struct platform_event
     XEvent Event;
 };
 
-struct platform_timestamp
-{
-    int Seconds;
-    int Milliseconds;
-};
-
 struct platform_event_result
 {
     XEvent Event;
 };
 
 #include "calendar.cpp"
+
+// ICCCM 4.1.2.7. WM_PROTOCOLS Property
+#define WM_DELETE_WINDOW 293
+#define WM_TAKE_FOCUS 294
+#define WM_PROTOCOLS 295
+
+static const char* GlobalXEventTypeString[LASTEvent] = {
+    "Error",          "Reply",          "KeyPress",         "KeyRelease",
+    "ButtonPress",    "ButtonRelease",  "MotionNotify",     "EnterNotify",
+    "LeaveNotify",    "FocusIn",        "FocusOut",         "KeymapNotify",
+    "Expose",         "GraphicsExpose", "NoExpose",         "VisibilityNotify",
+    "CreateNotify",   "DestroyNotify",  "UnmapNotify",      "MapNotify",
+    "MapRequest",     "ReparentNotify", "ConfigureNotify",  "ConfigureRequest",
+    "GravityNotify",  "ResizeRequest",  "CirculateNotify",  "CirculateRequest",
+    "PropertyNotify", "SelectionClear", "SelectionRequest", "SelectionNotify",
+    "ColormapNotify", "ClientMessage",  "MappingNotify",    "GenericEvent",
+};
 
 int
 main(int argc, char* argv[])
@@ -73,30 +78,6 @@ PlatformDrawLine(platform_window* Window, u32 X1, u32 Y1, u32 X2, u32 Y2)
 {
 
     XDrawLine(Window->Display, Window->Handle, Window->GraphicsContext, X1, Y1, X2, Y2);
-}
-
-void
-PlatformDrawGrid(platform_window* Window, u32 OffsetX, u32 OffsetY, u32 Width, u32 Height, u32 Rows, u32 Columns)
-{
-    Assert(Rows > 0);
-    Assert(Columns > 0);
-
-    f32 CellWidth  = Width / (f32) Columns;
-    f32 CellHeight = Height / (f32) Rows;
-
-    for(u32 i = 0; i <= Columns; i++)
-    {
-        f32 ColumnOffset = i * CellWidth;
-        XDrawLine(Window->Display, Window->Handle, Window->GraphicsContext, ColumnOffset + OffsetX, OffsetY,
-                  ColumnOffset + OffsetX, Height + OffsetY);
-    }
-
-    for(u32 i = 0; i <= Rows; i++)
-    {
-        f32 RowOffset = i * CellHeight;
-
-        PlatformDrawLine(Window, OffsetX, RowOffset + OffsetY, Width + OffsetX, RowOffset + OffsetY);
-    }
 }
 
 void
@@ -150,6 +131,10 @@ PlatformOpenWindow()
 {
     platform_window* Window = (platform_window*) malloc(sizeof(platform_window));
 
+#if CALENDAR_DEBUG
+    _Xdebug = true;
+#endif
+
     Window->Display = XOpenDisplay(NULL);
     Assert(Window->Display != NULL);
 
@@ -188,7 +173,6 @@ PlatformOpenWindow()
     Assert(Window->Handle != 0);
 
     // Window manager sends a ClientMessage to X11 for closing the window
-
     Atom WindowManagerProtocolDeleteWindow = XInternAtom(Window->Display, "WM_DELETE_WINDOW", True);
     Atom WindowManagerProtocols[]          = {WindowManagerProtocolDeleteWindow};
     int ProtocolResult
@@ -308,39 +292,37 @@ PlatformHandleEvent(platform_window* Window, platform_event* _Event)
 
             XClientMessageEvent ClientMessageEvent = Event.xclient;
 
-            char* AtomName = XGetAtomName(Window->Display, ClientMessageEvent.message_type);
-
             printf("ClientMessage {Message Type: %lu, Format: %d, MessageName: %s}\n", ClientMessageEvent.message_type,
-                   ClientMessageEvent.format, AtomName);
+                   ClientMessageEvent.format, XGetAtomName(Window->Display, ClientMessageEvent.message_type));
 
             if(ClientMessageEvent.message_type == WM_PROTOCOLS)
             {
                 // Format is 32 bits, hence using data.l
-                Atom Protocol      = ClientMessageEvent.data.l[0];
-                char* ProtocolName = XGetAtomName(Window->Display, Protocol);
-                if(strcmp(ProtocolName, "WM_PROTOCOLS"))
+                Atom Protocol  = ClientMessageEvent.data.l[0];
+                Atom Timestamp = ClientMessageEvent.data.l[1];
+
+                printf("WMProtocolMessage {Protocol: %lu, ProtocolName: %s, Timestamp: %lu}\n", Protocol,
+                       XGetAtomName(Window->Display, Protocol), Timestamp);
+
+                if(Protocol == WM_DELETE_WINDOW)
                 {
                     GlobalIsRunning = false;
                 }
-                printf("ProtocolMessage {Protocl: %lu, ProtocolName: %s}\n", Protocol, ProtocolName);
             }
         }
+        break;
 
         default:
         {
             XAnyEvent AnyEvent = Event.xany;
+
+            printf("Unhandled event {Type: %d, Type Name: %s, send_event: %d, Display: %p}\n", AnyEvent.type,
+                   GlobalXEventTypeString[AnyEvent.type], AnyEvent.send_event, AnyEvent.display);
         }
         break;
     }
 
     return NULL;
-}
-
-void
-PlatformCloseWindow(platform_window Window)
-{
-    XDestroyWindow(Window.Display, Window.Handle);
-    XCloseDisplay(Window.Display);
 }
 
 #endif
