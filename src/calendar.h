@@ -18,9 +18,7 @@
 
 #define PI 3.14159265f
 
-#ifdef NDEBUG
-#define Assert(Expression) ((void) 0)
-#else
+#if true // CALENDAR_DEBUG
 #define Assert(Expression)                                                                                             \
     {                                                                                                                  \
         if(!(Expression))                                                                                              \
@@ -29,6 +27,8 @@
             exit(EXIT_FAILURE);                                                                                        \
         }                                                                                                              \
     }
+#else
+#define Assert(Expression) ((void) 0)
 #endif
 
 typedef int8_t i8;
@@ -131,6 +131,13 @@ platform_window*
 PlatformOpenWindow();
 void
 PlatformCloseWindow(platform_window* Window);
+void
+PlatformClearWindow(platform_window* Window);
+
+int
+PlatformWindowWidth(platform_window* Window);
+int
+PlatformWindowHeight(platform_window* Window);
 
 platform_event*
 PlatformAllocateMemoryForEvent();

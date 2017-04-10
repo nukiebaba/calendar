@@ -30,18 +30,6 @@ struct platform_event_result
 #define WM_TAKE_FOCUS 294
 #define WM_PROTOCOLS 295
 
-static const char* GlobalXEventTypeString[LASTEvent] = {
-    "Error",          "Reply",          "KeyPress",         "KeyRelease",
-    "ButtonPress",    "ButtonRelease",  "MotionNotify",     "EnterNotify",
-    "LeaveNotify",    "FocusIn",        "FocusOut",         "KeymapNotify",
-    "Expose",         "GraphicsExpose", "NoExpose",         "VisibilityNotify",
-    "CreateNotify",   "DestroyNotify",  "UnmapNotify",      "MapNotify",
-    "MapRequest",     "ReparentNotify", "ConfigureNotify",  "ConfigureRequest",
-    "GravityNotify",  "ResizeRequest",  "CirculateNotify",  "CirculateRequest",
-    "PropertyNotify", "SelectionClear", "SelectionRequest", "SelectionNotify",
-    "ColormapNotify", "ClientMessage",  "MappingNotify",    "GenericEvent",
-};
-
 int
 main(int argc, char* argv[])
 {
@@ -49,6 +37,18 @@ main(int argc, char* argv[])
 
     // Game logic
     GameMain(argc, argv, Window);
+}
+
+int
+PlatformWindowWidth(platform_window* Window)
+{
+    return Window->Width;
+}
+
+int
+PlatformWindowHeight(platform_window* Window)
+{
+    return Window->Height;
 }
 
 platform_event*
@@ -76,30 +76,7 @@ PlatformGetTime()
 void
 PlatformDrawLine(platform_window* Window, u32 X1, u32 Y1, u32 X2, u32 Y2)
 {
-
     XDrawLine(Window->Display, Window->Handle, Window->GraphicsContext, X1, Y1, X2, Y2);
-}
-
-void
-RenderWindow(platform_window* Window)
-{
-
-    XGCValues Values;
-    XGetGCValues(Window->Display, Window->GraphicsContext, GCForeground, &Values);
-    if(Values.foreground == WhitePixel(Window->Display, Window->Screen))
-    {
-        XSetForeground(Window->Display, Window->GraphicsContext, BlackPixel(Window->Display, Window->Screen));
-    }
-    else
-    {
-        XSetForeground(Window->Display, Window->GraphicsContext, BlackPixel(Window->Display, Window->Screen));
-    }
-
-    XClearWindow(Window->Display, Window->Handle);
-
-    DrawClock(Window, Window->Width / 2, Window->Height / 2, 250);
-    DrawCalendarHeader(Window, Window->Width, Window->Height * 0.2);
-    // PlatformDrawCalendar(Window, Window->Width, Window->Height * 0.8, CalendarYear);
 }
 
 void
@@ -121,9 +98,20 @@ PlatformDrawCircle(platform_window* Window, int CenterX, int CenterY, int Radius
 }
 
 void
+PlatformClearWindow(platform_window* Window)
+{
+    XSync(Window->Display, false);
+    XClearWindow(Window->Display, Window->Handle);
+}
+
+void
 PlatformGetNextEvent(platform_window* Window, platform_event* _Event)
 {
-    XNextEvent(Window->Display, &_Event->Event);
+    int EventsQueued = XEventsQueued(Window->Display, QueuedAlready);
+    if(EventsQueued > 0)
+    {
+        XNextEvent(Window->Display, &_Event->Event);
+    }
 }
 
 platform_window*
@@ -195,6 +183,17 @@ PlatformOpenWindow()
 
     XSetFont(Window->Display, Window->GraphicsContext, FontInfo->fid);
 
+    XGCValues Values;
+    XGetGCValues(Window->Display, Window->GraphicsContext, GCForeground, &Values);
+    if(Values.foreground == WhitePixel(Window->Display, Window->Screen))
+    {
+        XSetForeground(Window->Display, Window->GraphicsContext, BlackPixel(Window->Display, Window->Screen));
+    }
+    else
+    {
+        XSetForeground(Window->Display, Window->GraphicsContext, BlackPixel(Window->Display, Window->Screen));
+    }
+
     platform_window* Result = Window;
     return Result;
 }
@@ -202,13 +201,26 @@ PlatformOpenWindow()
 platform_event_result*
 PlatformHandleEvent(platform_window* Window, platform_event* _Event)
 {
+
+    // LASTEvent identifies number of XEvent types
+    const char* GlobalXEventTypeString[LASTEvent] = {
+        "Error",          "Reply",          "KeyPress",         "KeyRelease",
+        "ButtonPress",    "ButtonRelease",  "MotionNotify",     "EnterNotify",
+        "LeaveNotify",    "FocusIn",        "FocusOut",         "KeymapNotify",
+        "Expose",         "GraphicsExpose", "NoExpose",         "VisibilityNotify",
+        "CreateNotify",   "DestroyNotify",  "UnmapNotify",      "MapNotify",
+        "MapRequest",     "ReparentNotify", "ConfigureNotify",  "ConfigureRequest",
+        "GravityNotify",  "ResizeRequest",  "CirculateNotify",  "CirculateRequest",
+        "PropertyNotify", "SelectionClear", "SelectionRequest", "SelectionNotify",
+        "ColormapNotify", "ClientMessage",  "MappingNotify",    "GenericEvent",
+    };
+
     XEvent Event = _Event->Event;
 
     switch(Event.type)
     {
         case MapNotify:
         {
-
             printf("MapNotify");
         }
         break;
@@ -219,8 +231,6 @@ PlatformHandleEvent(platform_window* Window, platform_event* _Event)
             {
                 break;
             }
-
-            XFlush(Window->Display);
         }
         break;
 
@@ -231,7 +241,6 @@ PlatformHandleEvent(platform_window* Window, platform_event* _Event)
                 GlobalIsRunning = false;
             }
 
-            RenderWindow(Window);
             printf("KeyPress {%d}\n", Event.xkey.keycode);
         }
         break;
@@ -249,24 +258,6 @@ PlatformHandleEvent(platform_window* Window, platform_event* _Event)
         }
         break;
 
-        case ResizeRequest:
-        {
-            XResizeRequestEvent ResizeRequestEvent = Event.xresizerequest;
-
-#if false
-            if (ResizeRequestEvent.width != Window->Width ||
-                ResizeRequestEvent.height != ResizeRequestEvent.height) {
-                Window->Width = ResizeRequestEvent.width;
-                Window->Height = ResizeRequestEvent.height;
-
-                RenderWindow(Window);
-            }
-#endif
-
-            printf("ResizeRequest {%d, %d}\n", ResizeRequestEvent.width, ResizeRequestEvent.height);
-        }
-        break;
-
         case ConfigureNotify:
         {
             XConfigureEvent ConfigureEvent = Event.xconfigure;
@@ -275,8 +266,6 @@ PlatformHandleEvent(platform_window* Window, platform_event* _Event)
             {
                 Window->Width  = ConfigureEvent.width;
                 Window->Height = ConfigureEvent.height;
-
-                RenderWindow(Window);
             }
 
             printf(
@@ -314,12 +303,18 @@ PlatformHandleEvent(platform_window* Window, platform_event* _Event)
 
         default:
         {
-            XAnyEvent AnyEvent = Event.xany;
+            if(_Event)
+            {
+                XAnyEvent AnyEvent = Event.xany;
 
-            printf("Unhandled event {Type: %d, Type Name: %s, send_event: %d, Display: %p}\n", AnyEvent.type,
-                   GlobalXEventTypeString[AnyEvent.type], AnyEvent.send_event, AnyEvent.display);
+                Assert(AnyEvent.type > 0);
+
+                printf("Unhandled event {Type: %d, Type Name: %s, send_event: %d, Display: %p}\n", AnyEvent.type,
+                       GlobalXEventTypeString[AnyEvent.type], AnyEvent.send_event, AnyEvent.display);
+
+                XFlush(Window->Display);
+            }
         }
-        break;
     }
 
     return NULL;

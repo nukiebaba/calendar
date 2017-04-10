@@ -28,12 +28,17 @@ PrintDateTime(date_time dt)
     printf("%04d-%02d-%02dT%02d:%02d:%02dZ", dt.Year, dt.Month, dt.Day, dt.Hour, dt.Minute, dt.Second);
 }
 
+#define Seconds(Quantity) (Quantity * 1000)
+#define Minutes(Quantity) (Seconds(60 * Quantity))
+#define Hours(Quantity) (Minutes(60 * Quantity))
+#define Days(Quantity) (Hours(24 * Quantity))
+
 inline u64
-DateTimeToSeconds(date_time dt)
+DateTimeToMilliseconds(date_time dt)
 {
     local_persist int DaysInMonth[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-    u64 Result = (dt.Year * 365 + IsLeapYear(dt.Year)) * 24 * 60 * 60 + DaysInMonth[dt.Month] * 24 * 60 * 60
-                 + dt.Day * 24 * 60 * 60 + dt.Hour * 60 + dt.Second;
+    u64 Result = Days(dt.Year * 365 + IsLeapYear(dt.Year)) + Days(DaysInMonth[dt.Month]) + Days(dt.Day) + Hours(dt.Hour)
+                 + Seconds(dt.Second);
 
     return Result;
 }
@@ -41,22 +46,22 @@ DateTimeToSeconds(date_time dt)
 inline u64
 DurationOfTimeInterval(date_time Start, date_time End)
 {
-    Assert(DateTimeToSeconds(Start) <= DateTimeToSeconds(End));
+    Assert(DateTimeToMilliseconds(Start) <= DateTimeToMilliseconds(End));
 
-    u64 Result = DateTimeToSeconds(End) - DateTimeToSeconds(Start);
+    u64 Result = DateTimeToMilliseconds(End) - DateTimeToMilliseconds(Start);
 
     return Result;
 }
 
 // https://en.wikipedia.org/wiki/Determination_of_the_day_of_the_week#Implementation-dependent_methods
 week_day
-WeekDayFromDate(int d, int m, int y)
+WeekDayFromDate(int Day, int Month, int Year)
 {
     week_day Result;
 
     local_persist int t[] = {0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4};
-    y -= m < 3;
-    int WeekDay = (y + y / 4 - y / 100 + y / 400 + t[m - 1] + d) % 7;
+    Year -= Month < 3;
+    int WeekDay = (Year + Year / 4 - Year / 100 + Year / 400 + t[Month - 1] + Day) % 7;
 
     Result = (week_day)((WeekDay + 6) % 7);
 
@@ -274,6 +279,17 @@ DrawGrid(platform_window* Window, u32 OffsetX, u32 OffsetY, u32 Width, u32 Heigh
     }
 }
 
+void
+RenderWindow(platform_window* Window, calendar_year_node* CalendarYear)
+{
+    int Width  = PlatformWindowWidth(Window);
+    int Height = PlatformWindowHeight(Window);
+
+    DrawClock(Window, Width / 2, Height / 2, 250);
+    DrawCalendarHeader(Window, Width, Height * 0.2);
+    DrawCalendar(Window, Width, Height * 0.8, CalendarYear);
+}
+
 int
 GameMain(int argc, char* argv[], platform_window* Window)
 {
@@ -345,6 +361,9 @@ GameMain(int argc, char* argv[], platform_window* Window)
     platform_event* Event = PlatformAllocateMemoryForEvent();
     while(GlobalIsRunning)
     {
+        PlatformClearWindow(Window);
+        RenderWindow(Window, &InitialCalendarYear);
+
         PlatformGetNextEvent(Window, Event);
         platform_event_result* Result = PlatformHandleEvent(Window, Event);
         free(Result);
