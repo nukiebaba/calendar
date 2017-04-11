@@ -116,7 +116,7 @@ PlatformGetNextEvent(platform_window* Window, platform_event* _Event)
 {
     XEvent Event;
     int EventsQueued = XEventsQueued(Window->Display, QueuedAfterReading);
-    if(EventsQueued > 0)
+    if(true)
     {
         XNextEvent(Window->Display, &Event);
         _Event->Event = Event;
