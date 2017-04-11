@@ -111,16 +111,18 @@ PlatformClearWindow(platform_window* Window)
     XClearWindow(Window->Display, Window->Handle);
 }
 
-void
+b32
 PlatformGetNextEvent(platform_window* Window, platform_event* _Event)
 {
     XEvent Event;
     int EventsQueued = XEventsQueued(Window->Display, QueuedAfterReading);
-    if(true)
+    if(EventsQueued > 0)
     {
         XNextEvent(Window->Display, &Event);
         _Event->Event = Event;
+        return true;
     }
+    return false;
 }
 
 void

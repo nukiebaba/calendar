@@ -141,7 +141,7 @@ PlatformWindowHeight(platform_window* Window);
 
 platform_event*
 PlatformAllocateMemoryForEvent();
-void
+b32
 PlatformGetNextEvent(platform_window* Window, platform_event* Event);
 platform_event_result*
 PlatformHandleEvent(platform_window* Window, platform_event* Event);

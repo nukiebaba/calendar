@@ -364,9 +364,12 @@ GameMain(int argc, char* argv[], platform_window* Window)
         PlatformClearWindow(Window);
         RenderWindow(Window, &InitialCalendarYear);
 
-        PlatformGetNextEvent(Window, Event);
-        platform_event_result* Result = PlatformHandleEvent(Window, Event);
-        free(Result);
+        b32 eventReceived = PlatformGetNextEvent(Window, Event);
+        if(eventReceived)
+        {
+            platform_event_result* Result = PlatformHandleEvent(Window, Event);
+            free(Result);
+        }
     }
 
     free(Event);
