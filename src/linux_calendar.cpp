@@ -33,10 +33,17 @@ struct platform_event_result
 int
 main(int argc, char* argv[])
 {
-    platform_window* Window = PlatformOpenWindow();
+#if CALENDAR_DEBUG
+    _Xdebug = true;
+#endif
+
+    platform_window Window = {};
+    PlatformOpenWindow(&Window);
 
     // Game logic
-    GameMain(argc, argv, Window);
+    GameMain(argc, argv, &Window);
+
+    return 0;
 }
 
 int
@@ -107,22 +114,18 @@ PlatformClearWindow(platform_window* Window)
 void
 PlatformGetNextEvent(platform_window* Window, platform_event* _Event)
 {
-    int EventsQueued = XEventsQueued(Window->Display, QueuedAlready);
+    XEvent Event;
+    int EventsQueued = XEventsQueued(Window->Display, QueuedAfterReading);
     if(EventsQueued > 0)
     {
-        XNextEvent(Window->Display, &_Event->Event);
+        XNextEvent(Window->Display, &Event);
+        _Event->Event = Event;
     }
 }
 
-platform_window*
-PlatformOpenWindow()
+void
+PlatformOpenWindow(platform_window* Window)
 {
-    platform_window* Window = (platform_window*) malloc(sizeof(platform_window));
-
-#if CALENDAR_DEBUG
-    _Xdebug = true;
-#endif
-
     Window->Display = XOpenDisplay(NULL);
     Assert(Window->Display != NULL);
 
@@ -193,9 +196,6 @@ PlatformOpenWindow()
     {
         XSetForeground(Window->Display, Window->GraphicsContext, BlackPixel(Window->Display, Window->Screen));
     }
-
-    platform_window* Result = Window;
-    return Result;
 }
 
 platform_event_result*
@@ -306,8 +306,6 @@ PlatformHandleEvent(platform_window* Window, platform_event* _Event)
             if(_Event)
             {
                 XAnyEvent AnyEvent = Event.xany;
-
-                Assert(AnyEvent.type > 0);
 
                 printf("Unhandled event {Type: %d, Type Name: %s, send_event: %d, Display: %p}\n", AnyEvent.type,
                        GlobalXEventTypeString[AnyEvent.type], AnyEvent.send_event, AnyEvent.display);

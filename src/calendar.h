@@ -127,8 +127,8 @@ typedef struct platform_event platform_event;
 typedef struct platform_event_result platform_event_result;
 typedef struct platform_timestamp platform_timestamp;
 
-platform_window*
-PlatformOpenWindow();
+void
+PlatformOpenWindow(platform_window* Window);
 void
 PlatformCloseWindow(platform_window* Window);
 void
