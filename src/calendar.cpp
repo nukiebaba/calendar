@@ -358,17 +358,30 @@ GameMain(int argc, char* argv[], platform_window* Window)
 
     GlobalIsRunning = true;
 
+    date_time PreviousTimestamp = PlatformGetTime();
+    date_time CurrentTimestamp  = PreviousTimestamp;
+    u32 dt                      = 0;
+
     platform_event* Event = PlatformAllocateMemoryForEvent();
     while(GlobalIsRunning)
     {
-        PlatformClearWindow(Window);
-        RenderWindow(Window, &InitialCalendarYear);
-
         b32 eventReceived = PlatformGetNextEvent(Window, Event);
         if(eventReceived)
         {
             platform_event_result* Result = PlatformHandleEvent(Window, Event);
             free(Result);
+        }
+
+        PreviousTimestamp = CurrentTimestamp;
+        CurrentTimestamp  = PlatformGetTime();
+
+        dt += DurationOfTimeInterval(PreviousTimestamp, CurrentTimestamp);
+
+        if(dt >= Seconds(1))
+        {
+            PlatformClearWindow(Window);
+            RenderWindow(Window, &InitialCalendarYear);
+            dt = 0;
         }
     }
 
