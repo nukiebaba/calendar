@@ -66,16 +66,16 @@ PlatformAllocateMemoryForEvent()
     return Result;
 }
 
-date_time
+timestamp
 PlatformGetTime()
 {
-    date_time Timestamp = {};
+    timestamp Timestamp = {};
 
     timeval TimeValue;
     gettimeofday(&TimeValue, NULL);
 
-    Timestamp.Second      = TimeValue.tv_sec;
-    Timestamp.Millisecond = TimeValue.tv_usec / 1000;
+    Timestamp.Seconds      = TimeValue.tv_sec;
+    Timestamp.Microseconds = TimeValue.tv_usec;
 
     return Timestamp;
 }

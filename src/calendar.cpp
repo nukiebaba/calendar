@@ -193,8 +193,8 @@ void
 DrawClock(platform_window* Window, u32 CenterX, u32 CenterY, u32 Radius)
 {
     int thetaOffset     = 90;
-    date_time Timestamp = PlatformGetTime();
-    int theta           = (Timestamp.Second % 60) * 6 - thetaOffset;
+    timestamp Timestamp = PlatformGetTime();
+    int theta           = (Timestamp.Seconds % 60) * 6 - thetaOffset;
 
     PlatformDrawCircle(Window, CenterX, CenterY, Radius);
 
@@ -358,9 +358,9 @@ GameMain(int argc, char* argv[], platform_window* Window)
 
     GlobalIsRunning = true;
 
-    date_time PreviousTimestamp = PlatformGetTime();
-    date_time CurrentTimestamp  = PreviousTimestamp;
-    u32 dt                      = 0;
+    timestamp PreviousTimestamp = PlatformGetTime();
+    timestamp CurrentTimestamp  = {};
+    int dtInSeconds             = 0;
 
     platform_event* Event = PlatformAllocateMemoryForEvent();
     while(GlobalIsRunning)
@@ -372,16 +372,18 @@ GameMain(int argc, char* argv[], platform_window* Window)
             free(Result);
         }
 
-        PreviousTimestamp = CurrentTimestamp;
-        CurrentTimestamp  = PlatformGetTime();
+        CurrentTimestamp = PlatformGetTime();
 
-        dt += DurationOfTimeInterval(PreviousTimestamp, CurrentTimestamp);
+        printf("TimestampDiff: %d\n", CurrentTimestamp.Seconds - PreviousTimestamp.Seconds);
 
-        if(dt >= Seconds(1))
+        dtInSeconds += CurrentTimestamp.Seconds - PreviousTimestamp.Seconds;
+
+        if(dtInSeconds >= 1)
         {
             PlatformClearWindow(Window);
             RenderWindow(Window, &InitialCalendarYear);
-            dt = 0;
+            PreviousTimestamp = CurrentTimestamp;
+            dtInSeconds       = 0;
         }
     }
 

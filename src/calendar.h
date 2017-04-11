@@ -83,6 +83,12 @@ typedef struct date_time
     u8 offsetMinute;
 } date_time;
 
+typedef struct timestamp
+{
+    u32 Seconds;
+    u32 Microseconds;
+} timestamp;
+
 typedef struct month
 {
     month_name Index;
@@ -146,7 +152,7 @@ PlatformGetNextEvent(platform_window* Window, platform_event* Event);
 platform_event_result*
 PlatformHandleEvent(platform_window* Window, platform_event* Event);
 
-date_time
+timestamp
 PlatformGetTime();
 
 void
