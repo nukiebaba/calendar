@@ -359,11 +359,13 @@ GameMain(int argc, char* argv[], platform_window* Window)
     GlobalIsRunning = true;
 
     timestamp PreviousTimestamp = PlatformGetTime();
-    timestamp CurrentTimestamp  = {};
-    int dtInSeconds             = 0;
+    timestamp CurrentTimestamp  = PreviousTimestamp;
+    int dtInSeconds             = 1;
+
+    printf("Starting LOPPPPPPPPPPPPPPP\n");
 
     platform_event* Event = PlatformAllocateMemoryForEvent();
-    while(GlobalIsRunning)
+    do
     {
         b32 eventReceived = PlatformGetNextEvent(Window, Event);
         if(eventReceived)
@@ -374,18 +376,19 @@ GameMain(int argc, char* argv[], platform_window* Window)
 
         CurrentTimestamp = PlatformGetTime();
 
-        printf("TimestampDiff: %d\n", CurrentTimestamp.Seconds - PreviousTimestamp.Seconds);
-
-        dtInSeconds += CurrentTimestamp.Seconds - PreviousTimestamp.Seconds;
-
         if(dtInSeconds >= 1)
         {
-            PlatformClearWindow(Window);
+
+            printf("TimestampDiff: %d\n", CurrentTimestamp.Seconds - PreviousTimestamp.Seconds);
+
             RenderWindow(Window, &InitialCalendarYear);
+            PlatformClearWindow(Window);
             PreviousTimestamp = CurrentTimestamp;
             dtInSeconds       = 0;
         }
-    }
+
+        dtInSeconds += CurrentTimestamp.Seconds - PreviousTimestamp.Seconds;
+    } while(GlobalIsRunning);
 
     free(Event);
     free(NextCalendarYear);
