@@ -26,9 +26,8 @@ struct platform_event_result
 #include "calendar.cpp"
 
 // ICCCM 4.1.2.7. WM_PROTOCOLS Property
-#define WM_DELETE_WINDOW 302
-#define WM_TAKE_FOCUS 303
-#define WM_PROTOCOLS 304
+#define WM_DELETE_WINDOW 293
+#define WM_PROTOCOLS 295
 
 int
 main(int argc, char* argv[])
