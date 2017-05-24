@@ -1,5 +1,7 @@
 #if defined(__linux__)
 
+#include "calendar.cpp"
+
 #include <X11/Xlib.h>
 #include <sys/time.h>
 
@@ -22,8 +24,6 @@ struct platform_event_result
 {
     XEvent Event;
 };
-
-#include "calendar.cpp"
 
 int
 main(int argc, char* argv[])

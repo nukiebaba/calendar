@@ -1,5 +1,7 @@
 #if defined(_WIN32) || defined(_WIN64)
 
+#include "calendar.cpp"
+
 #include <windows.h>
 
 struct platform_window
@@ -24,8 +26,6 @@ struct platform_event_result
 {
 	LRESULT MessageResult;
 };
-
-#include "calendar.cpp"
 
 void
 PlatformDrawClock(platform_window* Window)
