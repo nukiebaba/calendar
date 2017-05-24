@@ -218,6 +218,21 @@ DrawClock(platform_window* Window, u32 CenterX, u32 CenterY, u32 Radius)
 }
 
 void
+DrawClockNumerical(platform_window* Window, u32 TopLeftX, u32 TopLeftY, u32 Width, u32 Height)
+{
+    // hour, minute, second only
+    date_time LocalDateTime = PlatformGetLocalDateTime();
+    char ClockString[8];
+
+    sprintf(ClockString, "%d:%02d:%02d", LocalDateTime.Hour, LocalDateTime.Minute, LocalDateTime.Second);
+
+    u32 CenterX = TopLeftX + Width / 2 - 100;
+    u32 CenterY = TopLeftY + Height / 2 + 20;
+    PlatformDrawRectangle(Window, TopLeftX, TopLeftY, Width, Height);
+    PlatformDrawString(Window, CenterX, CenterY, ClockString, strlen(ClockString));
+}
+
+void
 DrawCalendarHeader(platform_window* Window, int Width, int Height)
 {
     local_persist const char* WeekDays[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
@@ -288,6 +303,7 @@ RenderWindow(platform_window* Window, calendar_year_node* CalendarYear)
     DrawClock(Window, Width / 2, Height / 2, 250);
     DrawCalendarHeader(Window, Width, Height * 0.2);
     DrawCalendar(Window, Width, Height * 0.8, CalendarYear);
+    DrawClockNumerical(Window, Width / 2 - 125, Height * 0.9, 250, 75);
 }
 
 int
@@ -351,7 +367,7 @@ GameMain(int argc, char* argv[], platform_window* Window)
 
             u64 Duration = DurationOfTimeInterval(Entry->StartTime, Entry->EndTime);
             Assert(Duration >= Schedule->MinimumTimeSlotSize);
-            printf("Title: %s\nStartTime: %d\nEndTime: %d\nDuration: %lu", Entry->Title, Entry->StartTime.Hour,
+            printf("Title: %s\nStartTime: %d\nEndTime: %d\nDuration: %lu\n", Entry->Title, Entry->StartTime.Hour,
                    Entry->EndTime.Hour, (unsigned long) Duration);
         }
     }
@@ -361,8 +377,6 @@ GameMain(int argc, char* argv[], platform_window* Window)
     timestamp PreviousTimestamp = PlatformGetTime();
     timestamp CurrentTimestamp  = PreviousTimestamp;
     int dtInSeconds             = 1;
-
-    printf("Starting LOPPPPPPPPPPPPPPP\n");
 
     platform_event* Event = PlatformAllocateMemoryForEvent();
     do

@@ -4,6 +4,7 @@
 
 #include <X11/Xlib.h>
 #include <sys/time.h>
+#include <time.h>
 
 struct platform_window
 {
@@ -67,12 +68,29 @@ PlatformGetTime()
     timestamp Timestamp = {};
 
     timeval TimeValue;
-    gettimeofday(&TimeValue, NULL);
+
+    i32 Result = gettimeofday(&TimeValue, NULL);
+
+    Assert(Result != -1);
 
     Timestamp.Seconds      = TimeValue.tv_sec;
     Timestamp.Microseconds = TimeValue.tv_usec;
 
     return Timestamp;
+}
+
+date_time
+PlatformGetLocalDateTime()
+{
+    date_time Result         = {};
+    time_t CalendarTime      = time(NULL);
+    struct tm* LocalDateTime = localtime(&CalendarTime);
+
+    Result.Hour   = LocalDateTime->tm_hour;
+    Result.Minute = LocalDateTime->tm_min;
+    Result.Second = LocalDateTime->tm_sec;
+
+    return Result;
 }
 
 void
@@ -85,6 +103,12 @@ void
 PlatformDrawString(platform_window* Window, u32 PosX, u32 PosY, char* String, u32 StringLength)
 {
     XDrawString(Window->Display, Window->Handle, Window->GraphicsContext, PosX, PosY, String, StringLength);
+}
+
+void
+PlatformDrawRectangle(platform_window* Window, u32 TopLeftX, u32 TopLeftY, u32 Width, u32 Height)
+{
+    XDrawRectangle(Window->Display, Window->Handle, Window->GraphicsContext, TopLeftX, TopLeftY, Width, Height);
 }
 
 void

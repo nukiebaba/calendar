@@ -154,6 +154,8 @@ PlatformHandleEvent(platform_window* Window, platform_event* Event);
 
 timestamp
 PlatformGetTime();
+date_time
+PlatformGetLocalDateTime();
 
 void
 PlatformDrawLine(platform_window* Window, u32 X1, u32 Y1, u32 X2, u32 Y2);
@@ -161,6 +163,8 @@ void
 PlatformDrawString(platform_window* Window, u32 PosX, u32 PosY, char* String, u32 StringLength);
 void
 PlatformDrawCircle(platform_window* Window, int CenterX, int CenterY, int Radius);
+void
+PlatformDrawRectangle(platform_window* Window, u32 TopLeftX, u32 TopLeftY, u32 Width, u32 Height);
 
 void
 DrawClock(platform_window* Window, u32 WindowWidth, u32 WindowHeight, u32 CenterX, u32 CenterY, u32 Radius);
