@@ -25,10 +25,6 @@ struct platform_event_result
 
 #include "calendar.cpp"
 
-// ICCCM 4.1.2.7. WM_PROTOCOLS Property
-#define WM_DELETE_WINDOW 293
-#define WM_PROTOCOLS 295
-
 int
 main(int argc, char* argv[])
 {
@@ -285,16 +281,21 @@ PlatformHandleEvent(platform_window* Window, platform_event* _Event)
             printf("ClientMessage {Message Type: %lu, Format: %d, MessageName: %s}\n", ClientMessageEvent.message_type,
                    ClientMessageEvent.format, XGetAtomName(Window->Display, ClientMessageEvent.message_type));
 
-            if(ClientMessageEvent.message_type == WM_PROTOCOLS)
+            char* MessageTypeName = XGetAtomName(Window->Display, ClientMessageEvent.message_type);
+
+            // WM Protocol Message
+            if(strcmp(MessageTypeName, "WM_PROTOCOLS") == 0)
             {
                 // Format is 32 bits, hence using data.l
                 Atom Protocol  = ClientMessageEvent.data.l[0];
                 Atom Timestamp = ClientMessageEvent.data.l[1];
 
-                printf("WMProtocolMessage {Protocol: %lu, ProtocolName: %s, Timestamp: %lu}\n", Protocol,
-                       XGetAtomName(Window->Display, Protocol), Timestamp);
+                char* ProtocolName = XGetAtomName(Window->Display, Protocol);
 
-                if(Protocol == WM_DELETE_WINDOW)
+                printf("WMProtocolMessage {Protocol: %lu, ProtocolMessageName: %s, Timestamp: %lu}\n", Protocol,
+                       ProtocolName, Timestamp);
+
+                if(strcmp(ProtocolName, "WM_DELETE_WINDOW") == 0)
                 {
                     GlobalIsRunning = false;
                 }
