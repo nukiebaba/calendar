@@ -1,34 +1,36 @@
 {
     // See https://go.microsoft.com/fwlink/?LinkId=733558
     // for the documentation about the tasks.json format
-    "version": "0.1.0",
+    "version": "2.0.0",
 
     "tasks": [
         {
             "taskName": "compile",
-            "isBuildCommand": true,
-            "command": "",
+            "type": "shell",
             "windows": {
-                "isShellCommand": true,
                 "command": "${workspaceRoot}/build.bat"
             },
             "linux": {
-                "isShellCommand": true,
-                "command": "sh",
-                "args": ["${workspaceRoot}/build.sh"]   
+                "command": "${workspaceRoot}/build.sh"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
             }
         },
         {
             "taskName": "run",
-            "isShellCommand": true,
-            "command": "",
+            "type": "process",
             "windows": {
                 "command": "${workspaceRoot}/build/windows/calendar"
             },
             "linux": {
                 "command": "${workspaceRoot}/build/linux/calendar"
             },
-            "isTestCommand": true
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            }
         }
     ]
 }
