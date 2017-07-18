@@ -200,7 +200,19 @@ PlatformOpenWindow(platform_window* Window)
     XSetForeground(Window->Display, Window->GraphicsContext, BlackPixel(Window->Display, Window->Screen));
     XSetBackground(Window->Display, Window->GraphicsContext, WhitePixel(Window->Display, Window->Screen));
 
-    char* FontName        = (char*) "-*-helvetica-*-r-*-*-50-*-*-*-*-*-*-*";
+    int ActualCount   = 0;
+    char* FontPattern = (char*) "-misc-fixed-medium-r-normal-*-50-*-*-*-*-*-*-*";
+    int MaxNames      = 100;
+    char** FontList   = XListFonts(Window->Display, FontPattern, MaxNames, &ActualCount);
+
+#if false
+    for(int i = 0; i < ActualCount; i++)
+    {
+        printf("%d. Font name: %s\n", i, FontList[i]);
+    }
+#endif
+
+    char* FontName        = FontList[0];
     XFontStruct* FontInfo = XLoadQueryFont(Window->Display, FontName);
 
     Assert(FontInfo != NULL);
@@ -222,7 +234,6 @@ PlatformOpenWindow(platform_window* Window)
 platform_event_result*
 PlatformHandleEvent(platform_window* Window, platform_event* _Event)
 {
-
     // LASTEvent identifies number of XEvent types
     const char* GlobalXEventTypeString[LASTEvent] = {
         "Error",          "Reply",          "KeyPress",         "KeyRelease",
