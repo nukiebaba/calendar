@@ -51,6 +51,14 @@ typedef real64 f64;
 
 typedef int b32;
 
+typedef struct rectangle
+{
+    u32 Width;
+    u32 Height;
+    u32 OffsetX;
+    u32 OffsetY;
+} rectangle;
+
 typedef enum { MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY } week_day;
 
 typedef enum {

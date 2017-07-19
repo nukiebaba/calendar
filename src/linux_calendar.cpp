@@ -212,6 +212,8 @@ PlatformOpenWindow(platform_window* Window)
     }
 #endif
 
+    Assert(ActualCount > 0);
+
     char* FontName        = FontList[0];
     XFontStruct* FontInfo = XLoadQueryFont(Window->Display, FontName);
 

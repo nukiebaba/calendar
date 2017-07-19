@@ -233,7 +233,7 @@ DrawClockNumerical(platform_window* Window, u32 TopLeftX, u32 TopLeftY, u32 Widt
 }
 
 void
-DrawCalendarHeader(platform_window* Window, int Width, int Height)
+DrawCalendarHeader(platform_window* Window, u32 Width)
 {
     local_persist const char* WeekDays[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
 
@@ -245,30 +245,6 @@ DrawCalendarHeader(platform_window* Window, int Width, int Height)
     {
         u32 x = i * CellWidth + CellWidth / 2;
         PlatformDrawString(Window, x, y, (char*) WeekDays[i], strlen(WeekDays[i]));
-    }
-}
-
-void
-DrawCalendar(platform_window* Window, u32 WindowWidth, u32 WindowHeight, calendar_year_node* CalendarYear)
-{
-    month Month     = CalendarYear->Months[CalendarYear->CurrentMonth];
-    int DaysInMonth = Month.Days;
-
-    u32 NumberOfColumns = 7;
-    u32 NumberOfRows    = ceil((float) DaysInMonth / NumberOfColumns);
-
-    Assert(NumberOfRows > 0);
-
-    for(u32 i = 0; i <= NumberOfRows; i++)
-    {
-        u32 GridLine = i * WindowHeight / NumberOfRows;
-        PlatformDrawLine(Window, 0, GridLine, WindowWidth, GridLine);
-    }
-
-    for(u32 i = 0; i <= NumberOfColumns; i++)
-    {
-        u32 GridLine = i * WindowWidth / NumberOfColumns;
-        PlatformDrawLine(Window, GridLine, 0, GridLine, WindowHeight);
     }
 }
 
@@ -295,14 +271,39 @@ DrawGrid(platform_window* Window, u32 OffsetX, u32 OffsetY, u32 Width, u32 Heigh
 }
 
 void
+DrawCalendarDays(platform_window* Window, u32 OffsetX, u32 OffsetY, u32 Width, u32 Height, u32 Rows, u32 Columns)
+{
+}
+
+void
+DrawCalendar(platform_window* Window, rectangle Dimension, calendar_year_node* CalendarYear)
+{
+    month Month     = CalendarYear->Months[CalendarYear->CurrentMonth];
+    int DaysInMonth = Month.Days;
+
+    u32 NumberOfColumns = 7;
+    u32 NumberOfRows    = ceil((float) DaysInMonth / NumberOfColumns);
+
+    Assert(NumberOfRows > 0);
+
+    DrawGrid(Window, Dimension.OffsetX, Dimension.OffsetY, Dimension.Width, Dimension.Height, NumberOfRows,
+             NumberOfColumns);
+
+    // DrawCalendarDays(Window, Dimension.OffsetX, Dimension.OffsetY, Dimension.Width, Dimension.Height, NumberOfRows,
+    // NumberOfColumns);
+}
+
+void
 RenderWindow(platform_window* Window, calendar_year_node* CalendarYear)
 {
     int Width  = PlatformWindowWidth(Window);
     int Height = PlatformWindowHeight(Window);
 
-    DrawClock(Window, Width / 2, Height / 2, 250);
-    DrawCalendarHeader(Window, Width, Height * 0.2);
-    DrawCalendar(Window, Width, Height * 0.8, CalendarYear);
+    //    DrawClock(Window, Width / 2, Height / 2, 250);
+    DrawCalendarHeader(Window, Width);
+
+    rectangle CalendarDimension = {Width * 0.8, Height * 0.8, Width * 0.1, Height * 0.1};
+    DrawCalendar(Window, CalendarDimension, CalendarYear);
     DrawClockNumerical(Window, Width / 2 - 125, Height * 0.9, 250, 75);
 }
 
@@ -332,8 +333,8 @@ GameMain(int argc, char* argv[], platform_window* Window)
     InitialCalendarYear.NextYear         = NextCalendarYear;
     NextCalendarYear->Year               = InitialCalendarYear.Year + 1;
 
-    // PrintCalendarYear(&InitialCalendarYear);
-    // PrintCalendarYear(NextCalendarYear);
+    PrintCalendarYear(&InitialCalendarYear);
+    PrintCalendarYear(NextCalendarYear);
 
     month CurrentMonth = InitialCalendarYear.Months[InitialCalendarYear.CurrentMonth];
 
@@ -392,9 +393,6 @@ GameMain(int argc, char* argv[], platform_window* Window)
 
         if(dtInSeconds >= 1)
         {
-
-            printf("TimestampDiff: %d\n", CurrentTimestamp.Seconds - PreviousTimestamp.Seconds);
-
             RenderWindow(Window, &InitialCalendarYear);
             PlatformClearWindow(Window);
             PreviousTimestamp = CurrentTimestamp;
