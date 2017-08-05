@@ -235,17 +235,20 @@ DrawClockNumerical(platform_window* Window, u32 TopLeftX, u32 TopLeftY, u32 Widt
 }
 
 void
-DrawCalendarHeader(platform_window* Window, u32 Width)
+DrawCalendarHeader(platform_window* Window, rectangle Dimension)
 {
+
+    // u32 TopLeftX, u32 TopLeftY, u32 Width, u32 Height
+
     local_persist const char* WeekDays[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
 
-    u32 CellWidth = Width / ArrayCount(WeekDays);
+    u32 CellWidth = Dimension.Width / ArrayCount(WeekDays);
 
-    u32 y = CellWidth / 2;
+    u32 y = Dimension.OffsetY + Dimension.Height / 2;
 
     for(int i = 0; i < ArrayCount(WeekDays); i++)
     {
-        u32 x = i * CellWidth + CellWidth / 2;
+        u32 x = i * CellWidth + Dimension.OffsetX;
         PlatformDrawString(Window, x, y, (char*) WeekDays[i], strlen(WeekDays[i]));
     }
 }
@@ -297,11 +300,10 @@ DrawCalendarDays(platform_window* Window, rectangle Dimension, u32 Rows, u32 Col
     for(int i = 0; i < Month.Days; i++)
     {
         CurrentColumn = (i + StartingWeekDay + 1) % 7;
-
+        u32 PositionX = Dimension.OffsetX + HorizontalDelta / 2 + CurrentColumn * HorizontalDelta;
+        u32 PositionY = Dimension.OffsetY + VerticalDelta / 2 + CurrentRow * VerticalDelta;
         sprintf(DayStringBuffer, "%d", i + 1);
-        PlatformDrawString(Window, Dimension.OffsetX + HorizontalDelta / 2 + CurrentColumn * HorizontalDelta,
-                           Dimension.OffsetY + VerticalDelta / 2 + CurrentRow * VerticalDelta, DayStringBuffer,
-                           strlen(DayStringBuffer));
+        PlatformDrawString(Window, PositionX, PositionY, DayStringBuffer, strlen(DayStringBuffer));
 
         if(CurrentColumn == SUNDAY)
         {
@@ -336,7 +338,10 @@ RenderWindow(platform_window* Window, calendar_year_node* CalendarYear)
     int Height = PlatformWindowHeight(Window);
 
     //    DrawClock(Window, Width / 2, Height / 2, 250);
-    DrawCalendarHeader(Window, Width);
+
+    // DrawCalendarHeader(platform_window* Window, u32 TopLeftX, u32 TopLeftY, u32 Width, u32 Height)
+    rectangle CalendarHeaderDimension = {Width * 0.8, Height * 0.1, Width * 0.125, Height * 0.04};
+    DrawCalendarHeader(Window, CalendarHeaderDimension);
 
     rectangle CalendarDimension = {Width * 0.8, Height * 0.8, Width * 0.1, Height * 0.1};
     DrawCalendar(Window, CalendarDimension, CalendarYear);
