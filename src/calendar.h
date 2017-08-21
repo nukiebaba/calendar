@@ -147,7 +147,8 @@ void
 PlatformCloseWindow(platform_window* Window);
 void
 PlatformClearWindow(platform_window* Window);
-
+void
+PlatformSetWindowTitle(platform_window* Window, char* Title);
 int
 PlatformWindowWidth(platform_window* Window);
 int

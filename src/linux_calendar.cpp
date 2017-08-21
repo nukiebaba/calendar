@@ -8,6 +8,7 @@
 
 struct platform_window
 {
+    char Title[1024];
     Display* Display;
     int Screen;
     Window Handle;
@@ -231,6 +232,12 @@ PlatformOpenWindow(platform_window* Window)
     {
         XSetForeground(Window->Display, Window->GraphicsContext, BlackPixel(Window->Display, Window->Screen));
     }
+}
+
+void
+PlatformSetWindowTitle(platform_window* Window, char* Title)
+{
+    XStoreName(Window->Display, Window->Handle, Title);
 }
 
 platform_event_result*

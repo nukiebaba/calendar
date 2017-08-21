@@ -353,6 +353,9 @@ RenderWindow(platform_window* Window, calendar_year_node* CalendarYear)
 int
 GameMain(int argc, char* argv[], platform_window* Window)
 {
+    char Title[] = "Homemade Calendar";
+    PlatformSetWindowTitle(Window, Title);
+
     calendar_year_node InitialCalendarYear = {2016,
                                               {
                                                   {JANUARY, "January", 31},
@@ -419,7 +422,8 @@ GameMain(int argc, char* argv[], platform_window* Window)
 
     timestamp PreviousTimestamp = PlatformGetTime();
     timestamp CurrentTimestamp  = PreviousTimestamp;
-    int dtInSeconds             = 1;
+    u32 dtInMicroseconds        = 0;
+    f32 MicrosecondsPerFrame    = (1 / 60L) * 1000 * 1000;
 
     platform_event* Event = PlatformAllocateMemoryForEvent();
     do
@@ -431,17 +435,16 @@ GameMain(int argc, char* argv[], platform_window* Window)
             free(Result);
         }
 
-        CurrentTimestamp = PlatformGetTime();
-
-        if(dtInSeconds >= 1)
+        if(dtInMicroseconds >= MicrosecondsPerFrame)
         {
             RenderWindow(Window, &InitialCalendarYear);
             PlatformClearWindow(Window);
             PreviousTimestamp = CurrentTimestamp;
-            dtInSeconds       = 0;
+            dtInMicroseconds  = 0;
         }
 
-        dtInSeconds += CurrentTimestamp.Seconds - PreviousTimestamp.Seconds;
+        CurrentTimestamp = PlatformGetTime();
+        dtInMicroseconds += CurrentTimestamp.Microseconds - PreviousTimestamp.Microseconds;
     } while(GlobalIsRunning);
 
     free(Event);
