@@ -222,6 +222,7 @@ DrawClock(platform_window* Window, u32 CenterX, u32 CenterY, u32 Radius)
 void
 DrawClockNumerical(platform_window* Window, u32 TopLeftX, u32 TopLeftY, u32 Width, u32 Height)
 {
+    PlatformClearArea(Window, TopLeftX, TopLeftY, Width, Height);
     // hour, minute, second only
     date_time LocalDateTime = PlatformGetLocalDateTime();
     char ClockString[8];
@@ -422,8 +423,8 @@ GameMain(int argc, char* argv[], platform_window* Window)
 
     timestamp PreviousTimestamp = PlatformGetTime();
     timestamp CurrentTimestamp  = PreviousTimestamp;
-    u32 dtInMicroseconds        = 0;
-    f32 MicrosecondsPerFrame    = (1 / 60L) * 1000 * 1000;
+    f32 dtInMicroseconds        = 0.0;
+    f32 MicrosecondsPerFrame    = (1 / 60.0) * 1000 * 1000;
 
     platform_event* Event = PlatformAllocateMemoryForEvent();
     do
@@ -435,15 +436,18 @@ GameMain(int argc, char* argv[], platform_window* Window)
             free(Result);
         }
 
+        // printf("Microseconds: %f, MicrosecondsPerFrame: %f\n", dtInMicroseconds, MicrosecondsPerFrame);
+
         if(dtInMicroseconds >= MicrosecondsPerFrame)
         {
+            printf("Rendering window...\n");
             RenderWindow(Window, &InitialCalendarYear);
-            PlatformClearWindow(Window);
-            PreviousTimestamp = CurrentTimestamp;
-            dtInMicroseconds  = 0;
+            // PlatformClearWindow(Window);
+            dtInMicroseconds = 0;
         }
 
-        CurrentTimestamp = PlatformGetTime();
+        PreviousTimestamp = CurrentTimestamp;
+        CurrentTimestamp  = PlatformGetTime();
         dtInMicroseconds += CurrentTimestamp.Microseconds - PreviousTimestamp.Microseconds;
     } while(GlobalIsRunning);
 

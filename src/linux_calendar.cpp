@@ -125,6 +125,12 @@ PlatformDrawCircle(platform_window* Window, int CenterX, int CenterY, int Radius
 }
 
 void
+PlatformClearArea(platform_window* Window, u32 OffsetX, u32 OffsetY, u32 Width, u32 Height)
+{
+    XClearArea(Window->Display, Window->Handle, OffsetX, OffsetY, Width, Height, true);
+}
+
+void
 PlatformClearWindow(platform_window* Window)
 {
     XSync(Window->Display, false);
@@ -268,7 +274,12 @@ PlatformHandleEvent(platform_window* Window, platform_event* _Event)
 
         case Expose:
         {
-            if(Event.xexpose.count > 0)
+            XExposeEvent ExposeEvent = Event.xexpose;
+            printf("ExposeEvent {x: %d, y: %d, Width: %d, Height: %d, Count: %d, send_event: %s}\n", ExposeEvent.x,
+                   ExposeEvent.y, ExposeEvent.width, ExposeEvent.height, ExposeEvent.count,
+                   ExposeEvent.send_event ? "true" : "false");
+
+            if(ExposeEvent.count > 0)
             {
                 break;
             }

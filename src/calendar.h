@@ -146,6 +146,8 @@ PlatformOpenWindow(platform_window* Window);
 void
 PlatformCloseWindow(platform_window* Window);
 void
+PlatformClearArea(platform_window* Window, u32 OffsetX, u32 OffsetY, u32 Width, u32 Height);
+void
 PlatformClearWindow(platform_window* Window);
 void
 PlatformSetWindowTitle(platform_window* Window, char* Title);
