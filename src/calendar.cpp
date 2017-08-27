@@ -338,13 +338,14 @@ RenderWindow(platform_window* Window, calendar_year_node* CalendarYear)
     int Width  = PlatformWindowWidth(Window);
     int Height = PlatformWindowHeight(Window);
 
-    //    DrawClock(Window, Width / 2, Height / 2, 250);
+    DrawClock(Window, Width / 2, Height / 2, 250);
 
     // DrawCalendarHeader(platform_window* Window, u32 TopLeftX, u32 TopLeftY, u32 Width, u32 Height)
-    rectangle CalendarHeaderDimension = {Width * 0.8, Height * 0.1, Width * 0.125, Height * 0.04};
+    rectangle CalendarHeaderDimension
+        = {(u32)(Width * 0.8), (u32)(Height * 0.1), (u32)(Width * 0.125), (u32)(Height * 0.04)};
     DrawCalendarHeader(Window, CalendarHeaderDimension);
 
-    rectangle CalendarDimension = {Width * 0.8, Height * 0.8, Width * 0.1, Height * 0.1};
+    rectangle CalendarDimension = {(u32)(Width * 0.8), (u32)(Height * 0.8), (u32)(Width * 0.1), (u32)(Height * 0.1)};
     DrawCalendar(Window, CalendarDimension, CalendarYear);
     DrawClockNumerical(Window, Width / 2 - 125, Height * 0.9, 250, 75);
 
@@ -427,22 +428,26 @@ GameMain(int argc, char* argv[], platform_window* Window)
     f32 MicrosecondsPerFrame    = (1 / 60.0) * 1000 * 1000;
 
     platform_event* Event = PlatformAllocateMemoryForEvent();
+
+#if false
+    b32 eventReceived     = PlatformGetNextEvent(Window, Event);
     do
     {
-        b32 eventReceived = PlatformGetNextEvent(Window, Event);
-        if(eventReceived)
+        while(eventReceived)
         {
-            platform_event_result* Result = PlatformHandleEvent(Window, Event);
-            free(Result);
+            b32 eventReceived = PlatformGetNextEvent(Window, Event);
+            PlatformHandleEvent(Window, Event);
         }
 
-        // printf("Microseconds: %f, MicrosecondsPerFrame: %f\n", dtInMicroseconds, MicrosecondsPerFrame);
+        if(dtInMicroseconds / 1000 == 12)
+        {
+            printf("Microseconds: %f, MicrosecondsPerFrame: %f\n", dtInMicroseconds, MicrosecondsPerFrame);
+        }
 
         if(dtInMicroseconds >= MicrosecondsPerFrame)
         {
             printf("Rendering window...\n");
             RenderWindow(Window, &InitialCalendarYear);
-            // PlatformClearWindow(Window);
             dtInMicroseconds = 0;
         }
 
@@ -450,7 +455,8 @@ GameMain(int argc, char* argv[], platform_window* Window)
         CurrentTimestamp  = PlatformGetTime();
         dtInMicroseconds += CurrentTimestamp.Microseconds - PreviousTimestamp.Microseconds;
     } while(GlobalIsRunning);
-
+#endif
+    free(Window);
     free(Event);
     free(NextCalendarYear);
     free(Schedule->Entries);

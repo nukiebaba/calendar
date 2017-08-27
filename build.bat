@@ -18,5 +18,5 @@ if not exist build\windows (
 )
 
 pushd build\windows
-cl -Zi /Fecalendar ..\..\src\win32_calendar.cpp user32.lib gdi32.lib
+cl -Zi -FC ..\..\src\win32_calendar.cpp user32.lib gdi32.lib /link /subsystem:windows
 popd

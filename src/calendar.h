@@ -136,13 +136,13 @@ struct platform_event;
 struct platform_event_result;
 struct platform_timestamp;
 
-typedef struct platform_window platform_window;
-typedef struct platform_event platform_event;
-typedef struct platform_event_result platform_event_result;
-typedef struct platform_timestamp platform_timestamp;
+// typedef struct platform_window platform_window;
+// typedef struct platform_event platform_event;
+// typedef struct platform_event_result platform_event_result;
+// typedef struct platform_timestamp platform_timestamp;
 
-void
-PlatformOpenWindow(platform_window* Window);
+platform_window*
+PlatformOpenWindow(char* Title, u32 Width, u32 Height);
 void
 PlatformCloseWindow(platform_window* Window);
 void
@@ -160,8 +160,8 @@ platform_event*
 PlatformAllocateMemoryForEvent();
 b32
 PlatformGetNextEvent(platform_window* Window, platform_event* Event);
-platform_event_result*
-PlatformHandleEvent(platform_window* Window, platform_event* Event);
+b32
+PlatformHandleEvent(platform_window Window, platform_event Event);
 
 timestamp
 PlatformGetTime();

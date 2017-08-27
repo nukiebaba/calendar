@@ -8,11 +8,11 @@
 
 struct platform_window
 {
-    char Title[1024];
     Display* Display;
     int Screen;
     Window Handle;
     GC GraphicsContext;
+    char Title[1024];
     int Width;
     int Height;
 };
@@ -246,8 +246,8 @@ PlatformSetWindowTitle(platform_window* Window, char* Title)
     XStoreName(Window->Display, Window->Handle, Title);
 }
 
-platform_event_result*
-PlatformHandleEvent(platform_window* Window, platform_event* _Event)
+b32
+PlatformHandleEvent(platform_window Window, platform_event _Event)
 {
     // LASTEvent identifies number of XEvent types
     const char* GlobalXEventTypeString[LASTEvent] = {
@@ -262,7 +262,7 @@ PlatformHandleEvent(platform_window* Window, platform_event* _Event)
         "ColormapNotify", "ClientMessage",  "MappingNotify",    "GenericEvent",
     };
 
-    XEvent Event = _Event->Event;
+    XEvent Event = _Event.Event;
 
     switch(Event.type)
     {
