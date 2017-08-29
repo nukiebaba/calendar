@@ -1,7 +1,7 @@
 #include "calendar.h"
 
 // Global vbariable to indicate the game is running
-global bool GlobalIsRunning;
+global bool GlobalIsRunning = true;
 
 inline b32
 IsLeapYear(int Year)
@@ -338,6 +338,8 @@ RenderWindow(platform_window* Window, calendar_year_node* CalendarYear)
     int Width  = PlatformWindowWidth(Window);
     int Height = PlatformWindowHeight(Window);
 
+    PlatformClearWindow(Window);
+
     DrawClock(Window, Width / 2, Height / 2, 250);
 
     // DrawCalendarHeader(platform_window* Window, u32 TopLeftX, u32 TopLeftY, u32 Width, u32 Height)
@@ -420,8 +422,6 @@ GameMain(int argc, char* argv[], platform_window* Window)
         }
     }
 
-    GlobalIsRunning = true;
-
     timestamp PreviousTimestamp = PlatformGetTime();
     timestamp CurrentTimestamp  = PreviousTimestamp;
     f32 dtInMicroseconds        = 0.0;
@@ -429,33 +429,27 @@ GameMain(int argc, char* argv[], platform_window* Window)
 
     platform_event* Event = PlatformAllocateMemoryForEvent();
 
-#if false
-    b32 eventReceived     = PlatformGetNextEvent(Window, Event);
+    b32 eventReceived = true;
     do
     {
-        while(eventReceived)
+        while(dtInMicroseconds <= MicrosecondsPerFrame)
         {
-            b32 eventReceived = PlatformGetNextEvent(Window, Event);
-            PlatformHandleEvent(Window, Event);
-        }
+            eventReceived = PlatformGetNextEvent(Window, Event);
+            while(eventReceived)
+            {
+                PlatformHandleEvent(Window, Event);
+                eventReceived = PlatformGetNextEvent(Window, Event);
+            }
 
-        if(dtInMicroseconds / 1000 == 12)
-        {
-            printf("Microseconds: %f, MicrosecondsPerFrame: %f\n", dtInMicroseconds, MicrosecondsPerFrame);
+            PreviousTimestamp = CurrentTimestamp;
+            CurrentTimestamp  = PlatformGetTime();
+            dtInMicroseconds += CurrentTimestamp.Microseconds - PreviousTimestamp.Microseconds;
         }
-
-        if(dtInMicroseconds >= MicrosecondsPerFrame)
-        {
-            printf("Rendering window...\n");
-            RenderWindow(Window, &InitialCalendarYear);
-            dtInMicroseconds = 0;
-        }
-
-        PreviousTimestamp = CurrentTimestamp;
-        CurrentTimestamp  = PlatformGetTime();
-        dtInMicroseconds += CurrentTimestamp.Microseconds - PreviousTimestamp.Microseconds;
+        RenderWindow(Window, &InitialCalendarYear);
+        PlatformClearWindow(Window);
+        dtInMicroseconds = 0;
     } while(GlobalIsRunning);
-#endif
+
     free(Window);
     free(Event);
     free(NextCalendarYear);

@@ -34,11 +34,10 @@ main(int argc, char* argv[])
     _Xdebug = true;
 #endif
 
-    platform_window Window = {};
-    PlatformOpenWindow(&Window);
+    platform_window* Window = PlatformOpenWindow((char*) "Linux Calendar", 800, 450);
 
     // Game logic
-    GameMain(argc, argv, &Window);
+    GameMain(argc, argv, Window);
 
     return 0;
 }
@@ -53,6 +52,12 @@ int
 PlatformWindowHeight(platform_window* Window)
 {
     return Window->Height;
+}
+
+void
+PlatformFlushWindow(platform_window* Window)
+{
+    XFlush(Window->Display);
 }
 
 platform_event*
@@ -151,9 +156,11 @@ PlatformGetNextEvent(platform_window* Window, platform_event* _Event)
     return false;
 }
 
-void
-PlatformOpenWindow(platform_window* Window)
+platform_window*
+PlatformOpenWindow(char* Title, u32 Width, u32 Height)
 {
+    platform_window* Window = (platform_window*) malloc(sizeof(platform_window));
+
     Window->Display = XOpenDisplay(NULL);
     Assert(Window->Display != NULL);
 
@@ -238,6 +245,8 @@ PlatformOpenWindow(platform_window* Window)
     {
         XSetForeground(Window->Display, Window->GraphicsContext, BlackPixel(Window->Display, Window->Screen));
     }
+
+    return Window;
 }
 
 void
@@ -247,7 +256,7 @@ PlatformSetWindowTitle(platform_window* Window, char* Title)
 }
 
 b32
-PlatformHandleEvent(platform_window Window, platform_event _Event)
+PlatformHandleEvent(platform_window* Window, platform_event* _Event)
 {
     // LASTEvent identifies number of XEvent types
     const char* GlobalXEventTypeString[LASTEvent] = {
@@ -262,7 +271,7 @@ PlatformHandleEvent(platform_window Window, platform_event _Event)
         "ColormapNotify", "ClientMessage",  "MappingNotify",    "GenericEvent",
     };
 
-    XEvent Event = _Event.Event;
+    XEvent Event = _Event->Event;
 
     switch(Event.type)
     {
@@ -360,19 +369,17 @@ PlatformHandleEvent(platform_window Window, platform_event _Event)
 
         default:
         {
-            if(_Event)
-            {
-                XAnyEvent AnyEvent = Event.xany;
 
-                printf("Unhandled event {Type: %d, Type Name: %s, send_event: %d, Display: %p}\n", AnyEvent.type,
-                       GlobalXEventTypeString[AnyEvent.type], AnyEvent.send_event, AnyEvent.display);
+            XAnyEvent AnyEvent = Event.xany;
 
-                XFlush(Window->Display);
-            }
+            printf("Unhandled event {Type: %d, Type Name: %s, send_event: %d, Display: %p}\n", AnyEvent.type,
+                   GlobalXEventTypeString[AnyEvent.type], AnyEvent.send_event, AnyEvent.display);
+
+            return false;
         }
     }
 
-    return NULL;
+    return true;
 }
 
 #endif

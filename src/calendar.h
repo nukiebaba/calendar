@@ -155,13 +155,15 @@ int
 PlatformWindowWidth(platform_window* Window);
 int
 PlatformWindowHeight(platform_window* Window);
+void
+PlatformFlushWindow(platform_window* Window);
 
 platform_event*
 PlatformAllocateMemoryForEvent();
 b32
 PlatformGetNextEvent(platform_window* Window, platform_event* Event);
 b32
-PlatformHandleEvent(platform_window Window, platform_event Event);
+PlatformHandleEvent(platform_window* Window, platform_event* Event);
 
 timestamp
 PlatformGetTime();
