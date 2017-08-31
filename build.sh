@@ -20,6 +20,16 @@ if [ -d $directory ]; then
             mkdir -p "$buildDirectory"
         fi
 
+        case "$1" in
+            --release )
+                if [ -f $buildDirectory/calendar ]; then
+                    $buildDirectory/calendar
+                    exit $?
+                fi
+                break
+                ;;
+        esac
+
         $directory/resources/ctime -begin $directory/calendar.ctm
         clang $directory/src/linux_calendar.cpp -o $buildDirectory/calendar -lX11 -lm -g
         error_code=$?
