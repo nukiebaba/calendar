@@ -1,4 +1,5 @@
-#!/bin/sh
+#!/bin/bash
+
 error_code=0
 directory=$(dirname $(readlink -f "$0"))
 echo Working directory: $directory
