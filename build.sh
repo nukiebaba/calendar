@@ -4,6 +4,8 @@ error_code=0
 directory=$(dirname $(readlink -f "$0"))
 echo Working directory: $directory
 
+CLANG_PATH="$HOME/clang/5.0/cc-toolchain/build/bin/clang"
+
 if [ -d $directory ]; then
     if uname -a | grep 'CYGWIN_NT'; then
         buildDirectory="$directory/build/cygwin"
@@ -12,7 +14,7 @@ if [ -d $directory ]; then
         fi
 
         $directory/resources/ctime.exe -begin $directory/calendar.ctm
-        clang $directory/src/linux_calendar.cpp -o $buildDirectory/calendar -g
+        $CLANG_PATH $directory/src/linux_calendar.cpp -o $buildDirectory/calendar -g
         error_code=$?
         $directory/resources/ctime.exe -end $directory/calendar.ctm "${error_code}"
     else
@@ -32,7 +34,7 @@ if [ -d $directory ]; then
         esac
 
         $directory/resources/ctime -begin $directory/calendar.ctm
-        clang $directory/src/linux_calendar.cpp -o $buildDirectory/calendar -lX11 -lm -g
+        $CLANG_PATH $directory/src/linux_calendar.cpp -o $buildDirectory/calendar -lX11 -lm -g
         error_code=$?
         $directory/resources/ctime -end $directory/calendar.ctm "${error_code}"
     fi
