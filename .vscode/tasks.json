@@ -5,7 +5,7 @@
 
     "tasks": [
         {
-            "taskName": "compile",
+            "label": "compile",
             "type": "shell",
             "windows": {
                 "command": "${workspaceRoot}/build.bat"
@@ -19,7 +19,7 @@
             }
         },
         {
-            "taskName": "run",
+            "label": "run",
             "type": "process",
             "windows": {
                 "command": "${workspaceRoot}/build/windows/calendar"

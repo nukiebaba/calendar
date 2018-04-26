@@ -241,12 +241,12 @@ PlatformOpenWindow(char* Title, u32 Width, u32 Height)
     Result->WindowClass.lpfnWndProc = MainWindowCallback;
     Result->WindowClass.hInstance   = GetModuleHandle(NULL); // Get the handle of exe
     //    WindowClass.hIcon;
-    Result->WindowClass.lpszClassName = "CalendarWindowClass";
+    Result->WindowClass.lpszClassName = (LPCWSTR) "CalendarWindowClass";
 
     if(RegisterClass(&Result->WindowClass))
     {
         Result->Handle
-            = CreateWindowEx(0, Result->WindowClass.lpszClassName, "Calendar", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            = CreateWindowEx(0, Result->WindowClass.lpszClassName, (LPCWSTR) "Calendar", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
                              CW_USEDEFAULT, // x
                              CW_USEDEFAULT, // y
                              CW_USEDEFAULT, // Width

@@ -82,16 +82,6 @@ PrintCalendarMonthHeader()
 void
 PrintCalendarMonth(month Month, week_day StartingWeekDay, b32 IsLeapYear = false)
 {
-
-#if false
-    printf("Index: %d\nMonth name: %s\nNumber of days: %d\n",
-           Month->Index,
-           Month->Name,
-           Month->Days);
-
-    printf("StartingWeekDay: %d\n", StartingWeekDay);
-#endif
-
     int DaysInMonth = Month.Days;
 
     if(Month.Index == FEBRUARY && IsLeapYear)
