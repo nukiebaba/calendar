@@ -1,5 +1,7 @@
 #if defined(_WIN32) || defined(_WIN64)
 
+#define UNICODE
+
 #include <windows.h>
 
 #include "calendar.cpp"
@@ -241,12 +243,12 @@ PlatformOpenWindow(char* Title, u32 Width, u32 Height)
     Result->WindowClass.lpfnWndProc = MainWindowCallback;
     Result->WindowClass.hInstance   = GetModuleHandle(NULL); // Get the handle of exe
     //    WindowClass.hIcon;
-    Result->WindowClass.lpszClassName = (LPCWSTR) "CalendarWindowClass";
+    Result->WindowClass.lpszClassName = (LPCWSTR)"CalendarWindowClass";
 
     if(RegisterClass(&Result->WindowClass))
     {
         Result->Handle
-            = CreateWindowEx(0, Result->WindowClass.lpszClassName, (LPCWSTR) "Calendar", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            = CreateWindowEx(0, Result->WindowClass.lpszClassName, (LPCWSTR)"Calendar", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
                              CW_USEDEFAULT, // x
                              CW_USEDEFAULT, // y
                              CW_USEDEFAULT, // Width
