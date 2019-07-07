@@ -21,8 +21,9 @@
         {
             "label": "run",
             "type": "process",
+            "command": "echo",
             "windows": {
-                "command": "${workspaceRoot}/build/windows/calendar"
+                "command": "${workspaceRoot}\\build\\windows\\win32_calendar.exe"
             },
             "linux": {
                 "command": "${workspaceRoot}/build/linux/calendar"

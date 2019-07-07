@@ -136,10 +136,10 @@ struct platform_event;
 struct platform_event_result;
 struct platform_timestamp;
 
-// typedef struct platform_window platform_window;
-// typedef struct platform_event platform_event;
-// typedef struct platform_event_result platform_event_result;
-// typedef struct platform_timestamp platform_timestamp;
+typedef struct platform_window platform_window;
+typedef struct platform_event platform_event;
+typedef struct platform_event_result platform_event_result;
+typedef struct platform_timestamp platform_timestamp;
 
 platform_window*
 PlatformOpenWindow(char* Title, u32 Width, u32 Height);
@@ -158,6 +158,8 @@ PlatformWindowHeight(platform_window* Window);
 void
 PlatformFlushWindow(platform_window* Window);
 
+platform_window*
+PlatformAllocateMemoryForWindow();
 platform_event*
 PlatformAllocateMemoryForEvent();
 b32

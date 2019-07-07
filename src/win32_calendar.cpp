@@ -1,10 +1,10 @@
 #if defined(_WIN32) || defined(_WIN64)
 
+#include "calendar.cpp"
+
 #define UNICODE
 
 #include <windows.h>
-
-#include "calendar.cpp"
 
 struct platform_window
 {
@@ -55,12 +55,6 @@ PlatformSetWindowTitle(platform_window* Window, char* Title)
 {
 }
 
-b32
-PlatformHandleEvent(platform_window* Window, platform_event* _Event)
-{
-    return false;
-}
-
 int
 PlatformWindowWidth(platform_window* Window)
 {
@@ -98,6 +92,14 @@ PlatformDrawCircle(platform_window* Window, int CenterX, int CenterY, int Radius
 void
 PlatformDrawRectangle(platform_window* Window, u32 TopLeftX, u32 TopLeftY, u32 Width, u32 Height)
 {
+}
+
+platform_window*
+PlatformAllocateMemoryForWindow()
+{
+    platform_window* Result;
+    Result = (platform_window*) malloc(sizeof platform_window);
+    return Result;
 }
 
 platform_event*
@@ -165,15 +167,15 @@ PlatformGetLocalDateTime()
 }
 
 b32
-PlatformHandleEvent(platform_window Window, platform_event Event)
+PlatformHandleEvent(platform_window* Window, platform_event* Event)
 {
     // NOTE: If this is not being called from the Windows callback, ignore it and early-out.
-    if(!Event.fromCallback)
+    if(!Event->fromCallback)
     {
         return true;
     }
 
-    switch(Event.Message.message)
+    switch(Event->Message.message)
     {
         case WM_SIZE:
         {
@@ -204,13 +206,13 @@ PlatformHandleEvent(platform_window Window, platform_event Event)
         case WM_PAINT:
         {
             PAINTSTRUCT Paint;
-            HDC DeviceContext = BeginPaint(Window.Handle, &Paint);
+            HDC DeviceContext = BeginPaint(Window->Handle, &Paint);
             int X             = Paint.rcPaint.left;
             int Y             = Paint.rcPaint.top;
             LONG Width        = Paint.rcPaint.right - Paint.rcPaint.left;
             LONG Height       = Paint.rcPaint.bottom - Paint.rcPaint.top;
             PatBlt(DeviceContext, X, Y, Width, Height, WHITENESS);
-            EndPaint(Window.Handle, &Paint);
+            EndPaint(Window->Handle, &Paint);
         }
         break;
 
@@ -229,19 +231,23 @@ MainWindowCallback(HWND WindowHandle, UINT MessageId, WPARAM WParam, LPARAM LPar
 {
     LRESULT MessageResult = 0;
 
-    platform_window Window = {};
-    Window.Handle          = WindowHandle;
+    platform_window* Window = PlatformAllocateMemoryForWindow();
+    Window->Handle          = WindowHandle;
 
-    platform_event Event = {};
-    Event.fromCallback   = true;
-    Event.MessageId      = MessageId;
-    Event.WParam         = WParam;
-    Event.LParam         = LParam;
+    platform_event* Event = PlatformAllocateMemoryForEvent();
+    Event->fromCallback   = true;
+    Event->MessageId      = MessageId;
+    Event->WParam         = WParam;
+    Event->LParam         = LParam;
 
     if(!PlatformHandleEvent(Window, Event))
     {
-        MessageResult = DefWindowProc(Window.Handle, MessageId, WParam, LParam);
+        MessageResult = DefWindowProc(Window->Handle, MessageId, WParam, LParam);
     }
+
+    //This is extremely wasteful to allocate and free every callback
+    free(Window);
+    free(Event);
 
     return MessageResult;
 }
