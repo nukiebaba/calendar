@@ -55,6 +55,12 @@ PlatformSetWindowTitle(platform_window* Window, char* Title)
 {
 }
 
+b32
+PlatformHandleEvent(platform_window* Window, platform_event* _Event)
+{
+    return false;
+}
+
 int
 PlatformWindowWidth(platform_window* Window)
 {
@@ -100,6 +106,12 @@ PlatformAllocateMemoryForEvent()
     platform_event* Result;
     Result = (platform_event*) malloc(sizeof platform_event);
     return Result;
+}
+
+void
+PlatformClearWindow(platform_window* Window)
+{
+    return;
 }
 
 #define WIN32_MESSAGE_RESULT_ERROR -1
